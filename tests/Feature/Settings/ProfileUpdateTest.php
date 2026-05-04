@@ -43,12 +43,18 @@ test('email verification status is unchanged when email address is unchanged', f
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
+test('delete account page is displayed', function () {
+    $this->actingAs($user = User::factory()->create());
+
+    $this->get(route('profile.delete'))->assertOk();
+});
+
 test('user can delete their account', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
-    $response = Livewire::test('pages::settings.delete-user-modal')
+    $response = Livewire::test('pages::settings.delete-user')
         ->set('password', 'password')
         ->call('deleteUser');
 
@@ -65,7 +71,7 @@ test('correct password must be provided to delete account', function () {
 
     $this->actingAs($user);
 
-    $response = Livewire::test('pages::settings.delete-user-modal')
+    $response = Livewire::test('pages::settings.delete-user')
         ->set('password', 'wrong-password')
         ->call('deleteUser');
 
