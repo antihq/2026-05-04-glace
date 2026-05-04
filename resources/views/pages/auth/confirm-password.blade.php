@@ -5,35 +5,31 @@
             <flux:separator />
         </div>
 
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-                <x-auth-session-status :status="session('status')" />
+        <div class="mt-8 max-w-md">
+            <x-auth-session-status :status="session('status')" />
 
-                <form method="POST" action="{{ route('password.confirm.store') }}" class="space-y-8">
-                    @csrf
+            <p class="text-sm leading-relaxed mb-5">You're confirming your password because you're about to perform a sensitive action — changing your email, adjusting security settings, or deleting your account. Enter your current password to continue.</p>
 
-                    <flux:input
-                        size="sm"
-                        name="password"
-                        :label="__('Password')"
-                        type="password"
-                        required
-                        autocomplete="current-password"
-                        :placeholder="__('Password')"
-                        viewable
-                    />
+            <form method="POST" action="{{ route('password.confirm.store') }}" class="space-y-5">
+                @csrf
 
-                    <div class="flex items-center justify-end">
-                        <flux:button size="sm" variant="primary" type="submit" data-test="confirm-password-button">
+                <flux:input
+                    size="sm"
+                    name="password"
+                    :label="__('Password')"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                    :placeholder="__('Password')"
+                    viewable
+                />
+
+                    <div class="flex items-center">
+                        <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit" data-test="confirm-password-button">
                             {{ __('Confirm') }}
                         </flux:button>
                     </div>
-                </form>
-            </div>
-
-            <div class="text-sm/6 space-y-3">
-                <p>This is a secure area of the application. Confirm your password before continuing.</p>
-            </div>
+            </form>
         </div>
     </div>
 </x-layouts::app>

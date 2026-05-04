@@ -5,59 +5,54 @@
             <flux:separator />
         </div>
 
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-                <x-auth-session-status :status="session('status')" />
+        <div class="mt-8 max-w-md">
+            <x-auth-session-status :status="session('status')" />
 
-                <form method="POST" action="{{ route('password.update') }}" class="space-y-8">
-                    @csrf
+            <p class="text-sm leading-relaxed mb-5">Choose a new password. Minimum 8 characters. Mix uppercase, lowercase, numbers, and symbols for a stronger password. After resetting, you'll be redirected to the login page.</p>
 
-                    <input type="hidden" name="token" value="{{ request()->route('token') }}">
+            <form method="POST" action="{{ route('password.update') }}" class="space-y-5">
+                @csrf
 
-                    <flux:input
-                        size="sm"
-                        name="email"
-                        value="{{ request('email') }}"
-                        :label="__('Email')"
-                        type="email"
-                        required
-                        autocomplete="email"
-                    />
+                <input type="hidden" name="token" value="{{ request()->route('token') }}">
 
-                    <flux:input
-                        size="sm"
-                        name="password"
-                        :label="__('Password')"
-                        type="password"
-                        required
-                        autocomplete="new-password"
-                        :placeholder="__('Password')"
-                        viewable
-                    />
+                <flux:input
+                    size="sm"
+                    name="email"
+                    value="{{ request('email') }}"
+                    :label="__('Email')"
+                    type="email"
+                    required
+                    autocomplete="email"
+                />
 
-                    <flux:input
-                        size="sm"
-                        name="password_confirmation"
-                        :label="__('Confirm password')"
-                        type="password"
-                        required
-                        autocomplete="new-password"
-                        :placeholder="__('Confirm password')"
-                        viewable
-                    />
+                <flux:input
+                    size="sm"
+                    name="password"
+                    :label="__('Password')"
+                    type="password"
+                    required
+                    autocomplete="new-password"
+                    :placeholder="__('Password')"
+                    viewable
+                />
 
-                    <div class="flex items-center justify-end">
-                        <flux:button size="sm" type="submit" variant="primary" data-test="reset-password-button">
+                <flux:input
+                    size="sm"
+                    name="password_confirmation"
+                    :label="__('Confirm password')"
+                    type="password"
+                    required
+                    autocomplete="new-password"
+                    :placeholder="__('Confirm password')"
+                    viewable
+                />
+
+                    <div class="flex items-center">
+                        <flux:button size="sm" type="submit" variant="primary" color="emerald" icon:trailing="arrow-right" data-test="reset-password-button">
                             {{ __('Reset password') }}
                         </flux:button>
                     </div>
-                </form>
-            </div>
-
-            <div class="text-sm/6 space-y-3">
-                <p>Choose a strong password. Use at least 8 characters — longer is better.</p>
-                <p>After resetting, you'll be redirected to the login page.</p>
-            </div>
+            </form>
         </div>
     </div>
 </x-layouts::app>
