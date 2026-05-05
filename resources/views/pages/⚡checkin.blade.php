@@ -9,79 +9,31 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Check In')] class extends Component {
-    public int $currentIndex = 0;
-
+new #[Title('Check In')] class extends Component
+{
     public array $balances = [];
-
-    public bool $isFirst = true;
-
-    public bool $isLast = false;
 
     public Collection $accounts;
 
     public function mount(): void
     {
         $this->accounts = Account::where('team_id', Auth::user()->currentTeam->id)->ordered()->get();
-        $this->isLast = $this->accounts->count() <= 1;
-    }
-
-    protected function updateFlags(): void
-    {
-        $this->isFirst = $this->currentIndex === 0;
-        $this->isLast = $this->currentIndex === $this->accounts->count() - 1;
-    }
-
-    protected function currentAccount(): ?Account
-    {
-        return $this->accounts[$this->currentIndex] ?? null;
-    }
-
-    public function next(): void
-    {
-        $account = $this->currentAccount();
-        $value = $this->balances[$account->id] ?? null;
-
-        if ($value !== null && $value !== '') {
-            $this->validateOnly("balances.{$account->id}", [
-                "balances.{$account->id}" => 'required|numeric',
-            ]);
-        }
-
-        if ($this->isLast) {
-            $this->submit();
-
-            return;
-        }
-
-        $this->currentIndex++;
-        $this->updateFlags();
-    }
-
-    public function skip(): void
-    {
-        unset($this->balances[$this->currentAccount()->id]);
-
-        if ($this->isLast) {
-            $this->submit();
-
-            return;
-        }
-
-        $this->currentIndex++;
-        $this->updateFlags();
-    }
-
-    public function back(): void
-    {
-        if (! $this->isFirst) {
-            $this->currentIndex--;
-            $this->updateFlags();
-        }
     }
 
     public function submit(): void
     {
+        $rules = [];
+        foreach ($this->accounts as $account) {
+            $value = $this->balances[$account->id] ?? null;
+            if ($value !== null && $value !== '') {
+                $rules["balances.{$account->id}"] = 'numeric';
+            }
+        }
+
+        if (! empty($rules)) {
+            $this->validate($rules);
+        }
+
         $now = now();
 
         $checkin = Checkin::create([
@@ -106,64 +58,37 @@ new #[Title('Check In')] class extends Component {
     }
 }; ?>
 
-<div class="flex flex-col items-center justify-center min-h-[60vh]">
+<div class="flex flex-col gap-3">
     @if ($this->accounts->isEmpty())
-        <flux:callout class="max-w-md">
-            <flux:callout.heading>{{ __('No accounts yet') }}</flux:callout.heading>
-            <flux:callout.text>
-                {{ __('You need to add at least one account before you can check in.') }}
-                <flux:link :href="route('accounts', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>{{ __('Go to Accounts') }}</flux:link>
-            </flux:callout.text>
-        </flux:callout>
+        <p class="text-sm text-zinc-500">
+            No accounts to check in.
+            <flux:link :href="route('accounts', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Add accounts</flux:link>
+        </p>
     @else
-        <div class="w-full max-w-sm space-y-8">
-            <div class="space-y-2">
-                <flux:progress :value="(($this->currentIndex + 1) / $this->accounts->count()) * 100" />
-                <flux:text class="text-center text-sm text-zinc-500">
-                    {{ $this->currentIndex + 1 }} {{ __('of') }} {{ $this->accounts->count() }}
-                </flux:text>
+        <form wire:submit="submit" class="flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+                <flux:heading class="whitespace-nowrap">{{ __('Check In') }}</flux:heading>
+                <flux:separator />
             </div>
 
-            <div class="space-y-6">
-                <flux:heading size="xl" class="text-center block">
-                    {{ $accounts[$currentIndex]->name }}
-                </flux:heading>
+            <div class="text-sm">Records a snapshot of your current balances. Each check-in is timestamped and used to compute changes over time. Leave any account blank to skip it &mdash; its balance carries forward from the last check-in.</div>
 
-                <flux:input
-                    wire:model="balances.{{ $accounts[$currentIndex]->id }}"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    size="lg"
-                    class="text-center text-2xl"
-                    autofocus
-                    wire:key="input-{{ $accounts[$currentIndex]->id }}"
-                />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                @foreach ($this->accounts as $account)
+                    <flux:input
+                        wire:model="balances.{{ $account->id }}"
+                        :label="$account->name"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        size="sm"
+                    />
+                @endforeach
             </div>
 
-            <div class="flex items-center justify-between gap-3">
-                @if (! $this->isFirst)
-                    <flux:button variant="ghost" wire:click="back">
-                        {{ __('Back') }}
-                    </flux:button>
-                @else
-                    <div></div>
-                @endif
-
-                <div class="flex items-center gap-3">
-                    <flux:button variant="ghost" wire:click="skip">
-                        {{ __('Skip') }}
-                    </flux:button>
-
-                    <flux:button variant="primary" wire:click="next">
-                        @if ($this->isLast)
-                            {{ __('Finish') }}
-                        @else
-                            {{ __('Next') }}
-                        @endif
-                    </flux:button>
-                </div>
+            <div class="flex items-center">
+                <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit">{{ __('Check In') }}</flux:button>
             </div>
-        </div>
+        </form>
     @endif
 </div>

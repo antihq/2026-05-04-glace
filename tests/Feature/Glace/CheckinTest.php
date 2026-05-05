@@ -29,51 +29,24 @@ test('checkin shows empty state when no accounts', function () {
     $this->actingAs($user);
 
     Livewire::test('pages::checkin')
-        ->assertSee('No accounts yet');
+        ->assertSee('No accounts to check in.');
 });
 
-test('checkin shows first account name', function () {
+test('checkin shows all account names simultaneously', function () {
     $user = User::factory()->create();
     Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking', 'sort_order' => 1]);
     Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings', 'sort_order' => 2]);
+    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Credit Card', 'sort_order' => 3]);
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
-        ->assertSee('Checking')
-        ->assertSee('1 of 2');
+    $html = Livewire::test('pages::checkin')->html();
+    expect($html)->toContain('Checking');
+    expect($html)->toContain('Savings');
+    expect($html)->toContain('Credit Card');
 });
 
-test('checkin advances to next account', function () {
-    $user = User::factory()->create();
-    $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking', 'sort_order' => 1]);
-    $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings', 'sort_order' => 2]);
-
-    $this->actingAs($user);
-
-    Livewire::test('pages::checkin')
-        ->set("balances.{$account1->id}", '100.00')
-        ->call('next')
-        ->assertSee('Savings')
-        ->assertSee('2 of 2');
-});
-
-test('checkin navigates back', function () {
-    $user = User::factory()->create();
-    $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking', 'sort_order' => 1]);
-    $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings', 'sort_order' => 2]);
-
-    $this->actingAs($user);
-
-    Livewire::test('pages::checkin')
-        ->set("balances.{$account1->id}", '100.00')
-        ->call('next')
-        ->assertSee('Savings')
-        ->call('back')
-        ->assertSee('Checking');
-});
-
-test('checkin creates balance records on finish', function () {
+test('checkin creates balance records on submit', function () {
     $user = User::factory()->create();
     $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
 
@@ -81,7 +54,7 @@ test('checkin creates balance records on finish', function () {
 
     Livewire::test('pages::checkin')
         ->set("balances.{$account->id}", '1500.50')
-        ->call('next')
+        ->call('submit')
         ->assertRedirect(route('dashboard', ['current_team' => $user->currentTeam->slug]));
 
     $this->assertDatabaseHas('checkins', [
@@ -105,24 +78,10 @@ test('checkin stores cents correctly from dollar input', function () {
 
     Livewire::test('pages::checkin')
         ->set("balances.{$account->id}", '12.34')
-        ->call('next');
+        ->call('submit');
 
     $balance = Balance::first();
     expect($balance->amount_in_cents)->toBe(1234);
-});
-
-test('checkin skips account without saving balance', function () {
-    $user = User::factory()->create();
-    $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking', 'sort_order' => 1]);
-    $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings', 'sort_order' => 2]);
-
-    $this->actingAs($user);
-
-    Livewire::test('pages::checkin')
-        ->call('skip')
-        ->assertSee('Savings');
-
-    expect(Balance::where('account_id', $account1->id)->exists())->toBeFalse();
 });
 
 test('checkin only saves accounts with values entered', function () {
@@ -134,8 +93,7 @@ test('checkin only saves accounts with values entered', function () {
 
     Livewire::test('pages::checkin')
         ->set("balances.{$account1->id}", '100.00')
-        ->call('next')
-        ->call('skip');
+        ->call('submit');
 
     expect(Balance::where('account_id', $account1->id)->count())->toBe(1);
     expect(Balance::where('account_id', $account2->id)->exists())->toBeFalse();
@@ -150,92 +108,68 @@ test('checkin rejects non-numeric balance input', function () {
 
     Livewire::test('pages::checkin')
         ->set("balances.{$account->id}", 'abc')
-        ->call('next')
+        ->call('submit')
         ->assertHasErrors(["balances.{$account->id}"]);
 });
 
-test('checkin skip on last account creates checkin without balance', function () {
+test('checkin submits empty checkin when no balances entered', function () {
     $user = User::factory()->create();
     $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $this->actingAs($user);
 
     Livewire::test('pages::checkin')
-        ->call('skip')
+        ->call('submit')
         ->assertRedirect(route('dashboard', ['current_team' => $user->currentTeam->slug]));
 
     expect(Checkin::where('team_id', $user->currentTeam->id)->count())->toBe(1);
     expect(Balance::where('account_id', $account->id)->exists())->toBeFalse();
 });
 
-test('checkin shows Next on non-last account', function () {
-    $user = User::factory()->create();
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 1]);
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 2]);
-
-    $this->actingAs($user);
-
-    Livewire::test('pages::checkin')
-        ->assertSee('Next')
-        ->assertDontSee('Finish');
-});
-
-test('checkin shows Finish on last account', function () {
-    $user = User::factory()->create();
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 1]);
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 2]);
-
-    $this->actingAs($user);
-
-    $account1 = Account::where('team_id', $user->currentTeam->id)->ordered()->first();
-
-    $html = Livewire::test('pages::checkin')
-        ->set("balances.{$account1->id}", '100')
-        ->call('next')
-        ->html();
-
-    expect($html)->toContain('Finish');
-    expect(substr_count($html, '>Next<'))->toBe(0);
-});
-
-test('checkin shows Back button after advancing', function () {
-    $user = User::factory()->create();
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 1]);
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 2]);
-
-    $this->actingAs($user);
-
-    $account1 = Account::where('team_id', $user->currentTeam->id)->ordered()->first();
-
-    Livewire::test('pages::checkin')
-        ->set("balances.{$account1->id}", '100')
-        ->call('next')
-        ->assertSee('Back');
-});
-
-test('checkin hides Back button on first account', function () {
-    $user = User::factory()->create();
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 1]);
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 2]);
-
-    $this->actingAs($user);
-
-    $html = Livewire::test('pages::checkin')->html();
-    expect(substr_count($html, '>Back<'))->toBe(0);
-});
-
-test('checkin skip clears previously entered balance', function () {
+test('checkin saves balances for multiple accounts', function () {
     $user = User::factory()->create();
     $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 1]);
     $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 2]);
+    $account3 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 3]);
 
     $this->actingAs($user);
 
     Livewire::test('pages::checkin')
         ->set("balances.{$account1->id}", '100.00')
-        ->call('skip')
-        ->call('next');
+        ->set("balances.{$account2->id}", '250.50')
+        ->set("balances.{$account3->id}", '50.00')
+        ->call('submit');
 
-    expect(Balance::where('account_id', $account1->id)->exists())->toBeFalse();
+    expect(Balance::where('account_id', $account1->id)->first()->amount_in_cents)->toBe(10000);
+    expect(Balance::where('account_id', $account2->id)->first()->amount_in_cents)->toBe(25050);
+    expect(Balance::where('account_id', $account3->id)->first()->amount_in_cents)->toBe(5000);
     expect(Checkin::where('team_id', $user->currentTeam->id)->count())->toBe(1);
+});
+
+test('checkin handles negative balance input', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkin')
+        ->set("balances.{$account->id}", '-500.75')
+        ->call('submit');
+
+    $balance = Balance::first();
+    expect($balance->amount_in_cents)->toBe(-50075);
+});
+
+test('checkin only shows current team accounts', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'My Checking']);
+    Account::factory()->create(['team_id' => $otherUser->currentTeam->id, 'name' => 'Their Savings']);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::checkin')->html();
+    expect($html)->toContain('My Checking');
+    expect($html)->not->toContain('Their Savings');
 });
