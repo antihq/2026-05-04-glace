@@ -29,8 +29,8 @@ test('dashboard shows welcome when no accounts', function () {
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('Welcome to Glace')
-        ->assertSee('Add Accounts');
+        ->assertSee('No accounts tracked.')
+        ->assertSee('Add accounts');
 });
 
 test('dashboard shows check-in prompt when accounts exist but no check-ins', function () {
@@ -40,8 +40,8 @@ test('dashboard shows check-in prompt when accounts exist but no check-ins', fun
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('Ready for your first check-in')
-        ->assertSee('Check In Now');
+        ->assertSee('No check-ins recorded.')
+        ->assertSee('Check in now');
 });
 
 test('dashboard shows balances after check-in', function () {
@@ -159,7 +159,7 @@ test('dashboard shows check-in time when some accounts were skipped', function (
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('Last checked in')
+        ->assertSee('Last check-in:')
         ->assertSee('Checking')
         ->assertSee('$1,000.00')
         ->assertSee('Savings');
@@ -312,7 +312,7 @@ test('dashboard does not show other teams data', function () {
     expect($html)->not->toContain('$9,999.00');
 });
 
-test('dashboard hides delta badge when balance unchanged between checkins', function () {
+test('dashboard shows dash for change when balance unchanged between checkins', function () {
     $user = User::factory()->create();
     $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
 
@@ -335,9 +335,8 @@ test('dashboard hides delta badge when balance unchanged between checkins', func
 
     $this->actingAs($user);
 
-    $html = Livewire::test('pages::dashboard')->html();
-    expect($html)->not->toContain('arrow-trending-up');
-    expect($html)->not->toContain('arrow-trending-down');
+    Livewire::test('pages::dashboard')
+        ->assertSeeHtml('&mdash;');
 });
 
 test('dashboard handles negative balances', function () {
@@ -356,4 +355,118 @@ test('dashboard handles negative balances', function () {
 
     Livewire::test('pages::dashboard')
         ->assertSee('-$250.75');
+});
+
+test('dashboard shows checkin count in metadata strip', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subDays(2)]);
+    Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subDay()]);
+
+    $latestCheckin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $latestCheckin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $latestCheckin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard')
+        ->assertSee('3 check-ins');
+});
+
+test('dashboard shows percentage change in summary grid', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $previousCheckin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subDay()]);
+    $latestCheckin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $previousCheckin->id,
+        'amount' => '1000.00',
+        'checked_in_at' => $previousCheckin->checked_in_at,
+    ]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $latestCheckin->id,
+        'amount' => '1500.00',
+        'checked_in_at' => $latestCheckin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard')
+        ->assertSee('+50.00%');
+});
+
+test('dashboard shows per-account percentage change in table', function () {
+    $user = User::factory()->create();
+    $checking = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking']);
+    $savings = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings']);
+
+    $previousCheckin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subDay()]);
+    $latestCheckin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $checking->id, 'checkin_id' => $previousCheckin->id, 'amount' => '200.00', 'checked_in_at' => $previousCheckin->checked_in_at]);
+    Balance::factory()->create(['account_id' => $savings->id, 'checkin_id' => $previousCheckin->id, 'amount' => '500.00', 'checked_in_at' => $previousCheckin->checked_in_at]);
+    Balance::factory()->create(['account_id' => $checking->id, 'checkin_id' => $latestCheckin->id, 'amount' => '250.00', 'checked_in_at' => $latestCheckin->checked_in_at]);
+    Balance::factory()->create(['account_id' => $savings->id, 'checkin_id' => $latestCheckin->id, 'amount' => '400.00', 'checked_in_at' => $latestCheckin->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain('+25.00%');
+    expect($html)->toContain('-20.00%');
+});
+
+test('dashboard always shows previous balance column', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard')
+        ->assertSee('Previous');
+});
+
+test('dashboard handles zero previous total without division error', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $previousCheckin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subDay()]);
+    $latestCheckin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $previousCheckin->id,
+        'amount' => '0.00',
+        'checked_in_at' => $previousCheckin->checked_in_at,
+    ]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $latestCheckin->id,
+        'amount' => '500.00',
+        'checked_in_at' => $latestCheckin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain('$500.00');
 });
