@@ -6,13 +6,13 @@
         </div>
 
         <div class="mt-8 max-w-md space-y-4">
-            <p class="text-sm leading-relaxed">
+            <p class="text-sm">
                 {{ __('Please verify your email address by clicking on the link we just emailed to you.') }}
                 Check your inbox and spam folder. The verification link expires after 60 minutes.
             </p>
 
             @if (session('status') == 'verification-link-sent')
-                <p class="text-sm leading-relaxed font-medium !dark:text-green-400 !text-green-600">
+                <p class="text-sm font-medium !dark:text-green-400 !text-green-600">
                     {{ __('A new verification link has been sent to the email address you provided during registration.') }}
                 </p>
             @endif

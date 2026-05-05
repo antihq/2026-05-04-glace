@@ -8,7 +8,7 @@
         <div class="mt-8 max-w-md">
             <x-auth-session-status :status="session('status')" />
 
-            <p class="text-sm leading-relaxed mb-5">You're confirming your password because you're about to perform a sensitive action — changing your email, adjusting security settings, or deleting your account. Enter your current password to continue.</p>
+            <p class="text-sm mb-5">You're confirming your password because you're about to perform a sensitive action — changing your email, adjusting security settings, or deleting your account. Enter your current password to continue.</p>
 
             <form method="POST" action="{{ route('password.confirm.store') }}" class="space-y-5">
                 @csrf
@@ -24,11 +24,11 @@
                     viewable
                 />
 
-                    <div class="flex items-center">
-                        <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit" data-test="confirm-password-button">
-                            {{ __('Confirm') }}
-                        </flux:button>
-                    </div>
+                <div class="flex items-center">
+                    <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit" data-test="confirm-password-button">
+                        {{ __('Confirm') }}
+                    </flux:button>
+                </div>
             </form>
         </div>
     </div>

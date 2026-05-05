@@ -8,7 +8,7 @@
         <div class="mt-8 max-w-md">
             <x-auth-session-status :status="session('status')" />
 
-            <p class="text-sm leading-relaxed mb-5">Choose a new password. Minimum 8 characters. Mix uppercase, lowercase, numbers, and symbols for a stronger password. After resetting, you'll be redirected to the login page.</p>
+            <p class="text-sm mb-5">Choose a new password. Minimum 8 characters. Mix uppercase, lowercase, numbers, and symbols for a stronger password. After resetting, you'll be redirected to the login page.</p>
 
             <form method="POST" action="{{ route('password.update') }}" class="space-y-5">
                 @csrf
@@ -47,11 +47,11 @@
                     viewable
                 />
 
-                    <div class="flex items-center">
-                        <flux:button size="sm" type="submit" variant="primary" color="emerald" icon:trailing="arrow-right" data-test="reset-password-button">
-                            {{ __('Reset password') }}
-                        </flux:button>
-                    </div>
+                <div class="flex items-center">
+                    <flux:button size="sm" type="submit" variant="primary" color="emerald" icon:trailing="arrow-right" data-test="reset-password-button">
+                        {{ __('Reset password') }}
+                    </flux:button>
+                </div>
             </form>
         </div>
     </div>

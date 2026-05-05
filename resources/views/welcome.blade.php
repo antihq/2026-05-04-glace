@@ -1,26 +1,20 @@
 <x-layouts::app :title="config('app.name', 'Glace')">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        <div class="space-y-6 text-sm leading-relaxed">
-            <div class="space-y-3">
-                <p>All your account balances. One screen. See how they change over time.</p>
-                <p>Stop logging into 5 different banking apps. Open Glance, enter your balances, see your total. That's it.</p>
-            </div>
-
-            <div class="space-y-3">
-                <p>You create accounts — checking, savings, credit cards, investments, whatever you track. Each account belongs to a team. You check in periodically with the current balance for each account.</p>
-                <p>Glace totals them and shows how each one changed over time. No bank connections. No automatic imports. You open the app, type the numbers, close the app.</p>
-            </div>
-
-            <div class="space-y-1">
-                <p>Accounts belong to teams. Invite collaborators with owner, admin, or member roles.</p>
-            </div>
+        <div class="space-y-4 text-sm">
+            <p>All your account balances. One screen. See how they change over time.</p>
+            <p>Stop logging into 5 different banking apps. Open Glance, enter your balances, see your total. That's it.</p>
+            <p>You create accounts — checking, savings, credit cards, investments, whatever you track. Each account belongs to a team. You check in periodically with the current balance for each account.</p>
+            <p>Glace totals them and shows how each one changed over time. No bank connections. No automatic imports. You open the app, type the numbers, close the app.</p>
+            <p>Accounts belong to teams. Invite collaborators with owner, admin, or member roles.</p>
 
             @if (Route::has('login') && !auth()->check())
-                <div class="pt-2">
-                    <flux:link :href="route('register')" wire:navigate>Create an account</flux:link>
-                    <span class="text-zinc-400 dark:text-zinc-500"> · </span>
-                    <flux:link :href="route('login')" wire:navigate>Log in</flux:link>
-                </div>
+                <flux:button size="sm" variant="primary" color="emerald" :href="route('register')" wire:navigate icon:trailing="arrow-right">
+                    {{ __('Create an account') }}
+                </flux:button>
+
+                <flux:text>
+                    Already have an account? <flux:link :href="route('login')" wire:navigate>Log in</flux:link>
+                </flux:text>
             @endif
         </div>
 

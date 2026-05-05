@@ -56,16 +56,16 @@
                     viewable
                 />
 
-                    <div class="flex items-center">
-                        <flux:button size="sm" type="submit" variant="primary" color="emerald" icon:trailing="arrow-right" data-test="register-user-button">
-                            {{ __('Create account') }}
-                        </flux:button>
-                    </div>
+                <div class="flex items-center">
+                    <flux:button size="sm" type="submit" variant="primary" color="emerald" icon:trailing="arrow-right" data-test="register-user-button">
+                        {{ __('Create account') }}
+                    </flux:button>
+                </div>
             </form>
 
-                <flux:text class="mt-4">
-                    Have an account? <flux:link :href="route('login')" wire:navigate>Log in</flux:link>
-                </flux:text>
+            <flux:text class="mt-4">
+                Have an account? <flux:link :href="route('login')" wire:navigate>Log in</flux:link>
+            </flux:text>
         </div>
 
         <div class="flex items-center mt-8">

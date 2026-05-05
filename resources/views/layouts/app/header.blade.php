@@ -12,8 +12,8 @@
 
                 <flux:spacer />
 
-                <flux:navbar class="w-full justify-between {{ auth()->check() ? 'grid grid-cols-3' : '' }}">
-                    @auth
+                @auth
+                    <flux:navbar class="w-full justify-between grid grid-cols-3">
                         @php($teamSlug = auth()->user()->currentTeam->slug)
 
                         <div class="flex">
@@ -29,14 +29,8 @@
                         <div class="flex justify-end">
                             <x-desktop-user-menu class="data-current:after:rounded-full" :showTeam="true" />
                         </div>
-                    @else
-                        <div class="flex justify-end w-full gap-1">
-                            <flux:navbar.item :href="route('login')" wire:navigate>
-                                {{ __('Login') }}
-                            </flux:navbar.item>
-                        </div>
-                    @endauth
-                </flux:navbar>
+                    </flux:navbar>
+                @endauth
             </div>
         </flux:header>
 

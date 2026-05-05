@@ -6,7 +6,7 @@
         </div>
 
         <div class="mt-8 max-w-md">
-            <p class="text-sm leading-relaxed mb-5">Two-factor authentication adds a second layer of security. Enter the code from your authenticator app. If you've lost access to your authenticator, use one of the recovery codes provided during setup.</p>
+            <p class="text-sm mb-5">Two-factor authentication adds a second layer of security. Enter the code from your authenticator app. If you've lost access to your authenticator, use one of the recovery codes provided during setup.</p>
 
             <div
                 class="relative w-full h-auto"
@@ -74,15 +74,15 @@
                             @enderror
                         </div>
 
-                            <flux:button
-                                size="sm"
-                                variant="primary"
-                                color="emerald"
-                                icon:trailing="arrow-right"
-                                type="submit"
-                            >
-                                {{ __('Continue') }}
-                            </flux:button>
+                        <flux:button
+                            size="sm"
+                            variant="primary"
+                            color="emerald"
+                            icon:trailing="arrow-right"
+                            type="submit"
+                        >
+                            {{ __('Continue') }}
+                        </flux:button>
                     </div>
 
                     <div class="mt-4 space-x-0.5 text-sm/6">

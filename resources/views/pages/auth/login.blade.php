@@ -44,11 +44,11 @@
 
                 <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
 
-                    <div class="flex items-center">
-                        <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit" data-test="login-button">
-                            {{ __('Log in') }}
-                        </flux:button>
-                    </div>
+                <div class="flex items-center">
+                    <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit" data-test="login-button">
+                        {{ __('Log in') }}
+                    </flux:button>
+                </div>
             </form>
 
             @if (Route::has('register'))
