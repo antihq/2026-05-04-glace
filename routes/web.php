@@ -13,6 +13,8 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');
         Route::livewire('checkin', 'pages::checkin')->name('checkin');
+        Route::livewire('checkins', 'pages::checkins')->name('checkins');
+        Route::livewire('checkins/{checkin}/edit', 'pages::checkin-edit')->name('checkins.edit');
         Route::livewire('accounts', 'pages::accounts')->name('accounts');
     });
 

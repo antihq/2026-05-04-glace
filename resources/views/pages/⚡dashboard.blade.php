@@ -182,6 +182,7 @@ new #[Title('Dashboard')] class extends Component
             @endif
             &middot; {{ $this->checkinCount }} check-in{{ $this->checkinCount === 1 ? '' : 's' }}
             &middot; <flux:link :href="route('checkin', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check in</flux:link>
+            &middot; <flux:link :href="route('checkins', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>History</flux:link>
         </div>
 
         <flux:separator />

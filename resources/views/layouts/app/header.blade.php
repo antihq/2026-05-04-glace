@@ -25,6 +25,9 @@
                             <flux:navbar.item :href="route('checkin', ['current_team' => $teamSlug])" :current="request()->routeIs('checkin')" class="data-current:after:rounded-full" wire:navigate>
                                 {{ __('Check In') }}
                             </flux:navbar.item>
+                            <flux:navbar.item :href="route('checkins', ['current_team' => $teamSlug])" :current="request()->routeIs('checkins') || request()->routeIs('checkins.edit')" class="data-current:after:rounded-full" wire:navigate>
+                                {{ __('History') }}
+                            </flux:navbar.item>
                         </div>
                         <div class="flex justify-end">
                             <x-desktop-user-menu class="data-current:after:rounded-full" :showTeam="true" />
