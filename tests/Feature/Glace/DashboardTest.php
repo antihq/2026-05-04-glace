@@ -23,25 +23,29 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertOk();
 });
 
-test('dashboard shows welcome when no accounts', function () {
+test('dashboard shows data structure when no accounts', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('No accounts tracked.')
-        ->assertSee('Add accounts');
+        ->assertSee('Total')
+        ->assertSee('$0.00')
+        ->assertSee('0 accounts tracked')
+        ->assertSee('Account Balances');
 });
 
-test('dashboard shows check-in prompt when accounts exist but no check-ins', function () {
+test('dashboard shows data structure when accounts exist but no check-ins', function () {
     $user = User::factory()->create();
     Account::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('No check-ins recorded.')
-        ->assertSee('Check in now');
+        ->assertSee('Total')
+        ->assertSee('$0.00')
+        ->assertSee('1 account tracked')
+        ->assertSee('Account Balances');
 });
 
 test('dashboard shows balances after check-in', function () {
@@ -480,32 +484,13 @@ test('dashboard shows Dashboard heading', function () {
         ->assertSee('Dashboard');
 });
 
-test('dashboard shows Check In button when check-ins exist', function () {
+test('dashboard always shows Check In button', function () {
     $user = User::factory()->create();
-    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
-    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
-
-    Balance::factory()->create([
-        'account_id' => $account->id,
-        'checkin_id' => $checkin->id,
-        'amount' => '100.00',
-        'checked_in_at' => $checkin->checked_in_at,
-    ]);
 
     $this->actingAs($user);
 
     $html = Livewire::test('pages::dashboard')->html();
     expect($html)->toContain(route('checkins.create', ['current_team' => $user->currentTeam->slug]));
-});
-
-test('dashboard hides Check In button when no check-ins', function () {
-    $user = User::factory()->create();
-    Account::factory()->create(['team_id' => $user->currentTeam->id]);
-
-    $this->actingAs($user);
-
-    $html = Livewire::test('pages::dashboard')->html();
-    expect($html)->not->toContain('Check In</flux:button>');
 });
 
 test('dashboard links to accounts index from description list', function () {

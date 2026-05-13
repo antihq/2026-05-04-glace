@@ -23,14 +23,15 @@ test('checkins page redirects guests to login', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('checkins shows empty state when no checkins', function () {
+test('checkins shows table headers when no checkins', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     Livewire::test('pages::checkins.index')
-        ->assertSee('No check-ins recorded.')
-        ->assertSee('Check in now');
+        ->assertSee('Date')
+        ->assertSee('Accounts')
+        ->assertSee('Total');
 });
 
 test('checkins lists checkins ordered newest first', function () {

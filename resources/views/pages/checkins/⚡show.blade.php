@@ -88,29 +88,27 @@ new class extends Component
         <x-description.details class="tabular-nums">{{ $this->formatCents($this->total) }}</x-description.details>
     </x-description.list>
 
-    @if ($this->checkin->balances->isNotEmpty())
-        <flux:heading level="2" class="mt-12">Balances</flux:heading>
-        <flux:table class="mt-4">
-            <flux:table.columns>
-                <flux:table.column>Account</flux:table.column>
-                <flux:table.column align="right">Amount</flux:table.column>
-            </flux:table.columns>
-            <flux:table.rows>
-                @foreach ($this->checkin->balances as $balance)
-                    <flux:table.row>
-                        <flux:table.cell class="relative">
-                            <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate :first="true" />
-                            {{ $balance->account->name }}
-                        </flux:table.cell>
-                        <flux:table.cell class="relative text-right">
-                            <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate />
-                            <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
-    @endif
+    <flux:heading level="2" class="mt-12">Balances</flux:heading>
+    <flux:table class="mt-4">
+        <flux:table.columns>
+            <flux:table.column>Account</flux:table.column>
+            <flux:table.column align="right">Amount</flux:table.column>
+        </flux:table.columns>
+        <flux:table.rows>
+            @foreach ($this->checkin->balances as $balance)
+                <flux:table.row>
+                    <flux:table.cell class="relative">
+                        <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate :first="true" />
+                        {{ $balance->account->name }}
+                    </flux:table.cell>
+                    <flux:table.cell class="relative text-right">
+                        <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate />
+                        <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
 
     <flux:separator class="mt-12" />
 

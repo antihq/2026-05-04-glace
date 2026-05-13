@@ -23,20 +23,19 @@ new #[Title('Accounts')] class extends Component
         <flux:button variant="primary" :href="route('accounts.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Add Account</flux:button>
     </div>
 
-    @if ($this->accounts->isNotEmpty())
-        <flux:table class="mt-8">
-            <flux:table.rows>
-                @foreach ($this->accounts as $account)
-                    <flux:table.row>
-                        <flux:table.cell class="relative">
-                            <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $account->id])" wire:navigate :first="true" />
-                            {{ $account->name }}
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
-    @else
-        <p class="mt-2.5 text-sm text-zinc-500">No accounts yet.</p>
-    @endif
+    <flux:table class="mt-8">
+        <flux:table.columns>
+            <flux:table.column>Account</flux:table.column>
+        </flux:table.columns>
+        <flux:table.rows>
+            @foreach ($this->accounts as $account)
+                <flux:table.row>
+                    <flux:table.cell class="relative">
+                        <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $account->id])" wire:navigate :first="true" />
+                        {{ $account->name }}
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
 </section>

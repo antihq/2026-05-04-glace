@@ -68,10 +68,11 @@ new class extends Component
     <div>
         <flux:heading size="xl" level="1">Edit Account</flux:heading>
 
-        <form wire:submit="update" class="mt-6 space-y-8">
+        <form wire:submit="update" class="mt-6 space-y-8 max-w-lg">
             <flux:field>
                 <flux:label>Name</flux:label>
-                <flux:input wire:model="name" type="text" required autofocus autocomplete="off" class="max-w-lg" />
+                <flux:input wire:model="name" type="text" required autofocus autocomplete="off" />
+                <flux:description>A label for this account, shown in tables and reports.</flux:description>
                 <flux:error name="name" />
             </flux:field>
 
@@ -82,16 +83,16 @@ new class extends Component
                         <flux:select.option value="{{ $case->value }}">{{ $case->label() }}</flux:select.option>
                     @endforeach
                 </flux:select>
+                <flux:description>Credit Card changes how check-in balances are entered. All other types are informational only.</flux:description>
                 <flux:error name="type" />
             </flux:field>
 
-            @if ($type === 'credit_card')
-                <flux:field>
-                    <flux:label>Credit Limit</flux:label>
-                    <flux:input wire:model="credit_limit" type="number" step="0.01" placeholder="Optional — used to calculate balance from available credit" class="max-w-lg" />
-                    <flux:error name="credit_limit" />
-                </flux:field>
-            @endif
+            <flux:field>
+                <flux:label>Credit Limit</flux:label>
+                <flux:input wire:model="credit_limit" type="number" step="0.01" class="max-w-lg" :disabled="$type !== 'credit_card'" />
+                <flux:description>When set, check-ins prompt for available credit and compute balance owed as credit limit minus available credit. When unset, check-ins prompt for balance owed directly.</flux:description>
+                <flux:error name="credit_limit" />
+            </flux:field>
 
             <flux:button variant="primary" type="submit">Save</flux:button>
         </form>

@@ -89,15 +89,15 @@ test('checkins.show lists balances with account names and amounts', function () 
     expect($html)->toContain('$500.00');
 });
 
-test('checkins.show hides balances table when no balances', function () {
+test('checkins.show shows balances table when no balances', function () {
     $user = User::factory()->create();
     $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
 
     $this->actingAs($user);
 
     Livewire::test('pages::checkins.show', ['checkin' => $checkin->id])
-        ->assertDontSee('Account')
-        ->assertDontSee('Amount');
+        ->assertSee('Account')
+        ->assertSee('Amount');
 });
 
 test('checkins.show can delete a checkin', function () {

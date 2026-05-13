@@ -23,13 +23,14 @@ test('checkin page redirects guests to login', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('checkin shows empty state when no accounts', function () {
+test('checkin shows form when no accounts', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     Livewire::test('pages::checkins.create')
-        ->assertSee('No accounts to check in.');
+        ->assertSee('Check In')
+        ->assertSeeHtml('type="submit"');
 });
 
 test('checkin shows all account names simultaneously', function () {

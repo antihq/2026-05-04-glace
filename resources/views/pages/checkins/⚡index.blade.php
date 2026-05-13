@@ -31,36 +31,29 @@ new #[Title('Check-in History')] class extends Component
         <flux:button variant="primary" :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check In</flux:button>
     </div>
 
-    @if ($this->checkins->isEmpty())
-        <p class="mt-2.5 text-sm text-zinc-500">
-            No check-ins recorded.
-            <flux:link :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check in now</flux:link>
-        </p>
-    @else
-        <flux:table class="mt-8">
-            <flux:table.columns>
-                <flux:table.column>Date</flux:table.column>
-                <flux:table.column class="text-right">Accounts</flux:table.column>
-                <flux:table.column class="text-right">Total</flux:table.column>
-            </flux:table.columns>
-            <flux:table.rows>
-                @foreach ($this->checkins as $checkin)
-                    <flux:table.row>
-                        <flux:table.cell class="relative">
-                            <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate :first="true" />
-                            {{ $checkin->checked_in_at->format('M j, Y g:i A') }} {{ $checkin->checked_in_at->diffForHumans() }}
-                        </flux:table.cell>
-                        <flux:table.cell class="relative">
-                            <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate />
-                            <span class="tabular-nums">{{ $checkin->balances->count() }} {{ str()->plural('account', $checkin->balances->count()) }}</span>
-                        </flux:table.cell>
-                        <flux:table.cell class="relative">
-                            <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate />
-                            <span class="tabular-nums">{{ $this->formatCents($checkin->balances->sum('amount_in_cents')) }}</span>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
-    @endif
+    <flux:table class="mt-8">
+        <flux:table.columns>
+            <flux:table.column>Date</flux:table.column>
+            <flux:table.column class="text-right">Accounts</flux:table.column>
+            <flux:table.column class="text-right">Total</flux:table.column>
+        </flux:table.columns>
+        <flux:table.rows>
+            @foreach ($this->checkins as $checkin)
+                <flux:table.row>
+                    <flux:table.cell class="relative">
+                        <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate :first="true" />
+                        {{ $checkin->checked_in_at->format('M j, Y g:i A') }} {{ $checkin->checked_in_at->diffForHumans() }}
+                    </flux:table.cell>
+                    <flux:table.cell class="relative">
+                        <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate />
+                        <span class="tabular-nums">{{ $checkin->balances->count() }} {{ str()->plural('account', $checkin->balances->count()) }}</span>
+                    </flux:table.cell>
+                    <flux:table.cell class="relative">
+                        <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate />
+                        <span class="tabular-nums">{{ $this->formatCents($checkin->balances->sum('amount_in_cents')) }}</span>
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
 </section>

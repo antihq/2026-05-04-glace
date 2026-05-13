@@ -114,37 +114,28 @@ new #[Title('Edit Check-in')] class extends Component
                 {{ $this->checkedInAt }}
             </div>
 
-            <div class="text-sm">Update balance amounts or leave blank to remove an account from this check-in.</div>
+            <flux:text>Leave any account blank to remove it from this check-in.</flux:text>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 @foreach ($this->accounts as $account)
                     <div>
                         @if ($account->type === AccountType::CreditCard && $account->credit_limit_in_cents !== null)
-                            <flux:input
-                                wire:model="balances.{{ $account->id }}"
-                                :label="$account->name . ' — Available credit'"
-                                type="number"
-                                step="0.01"
-                                placeholder="Leave blank to remove"
-                            />
-                            <flux:text class="!mt-1 text-xs text-zinc-500">Balance owed = credit limit ({{ $account->credit_limit }}) − available credit</flux:text>
+                            <flux:field>
+                                <flux:label>{{ $account->name }} — Available credit</flux:label>
+                                <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
+                                <flux:description>Balance owed = credit limit ({{ $account->credit_limit }}) − available credit.</flux:description>
+                            </flux:field>
                         @elseif ($account->type === AccountType::CreditCard)
-                            <flux:input
-                                wire:model="balances.{{ $account->id }}"
-                                :label="$account->name"
-                                type="number"
-                                step="0.01"
-                                placeholder="Leave blank to remove"
-                            />
-                            <flux:text class="!mt-1 text-xs text-zinc-500">Enter balance owed — stored as negative</flux:text>
+                            <flux:field>
+                                <flux:label>{{ $account->name }}</flux:label>
+                                <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
+                                <flux:description>Enter balance owed. Stored as negative.</flux:description>
+                            </flux:field>
                         @else
-                            <flux:input
-                                wire:model="balances.{{ $account->id }}"
-                                :label="$account->name"
-                                type="number"
-                                step="0.01"
-                                placeholder="Leave blank to remove"
-                            />
+                            <flux:field>
+                                <flux:label>{{ $account->name }}</flux:label>
+                                <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
+                            </flux:field>
                         @endif
                     </div>
                 @endforeach

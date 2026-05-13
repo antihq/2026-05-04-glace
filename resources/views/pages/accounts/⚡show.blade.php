@@ -124,55 +124,53 @@ new class extends Component
         @endif
     </x-description.list>
 
-    @if ($this->balances->isNotEmpty())
-        <flux:heading level="2" class="mt-12">Balance History</flux:heading>
-        <flux:table class="mt-4">
-            <flux:table.columns>
-                <flux:table.column>Date</flux:table.column>
-                <flux:table.column align="right">Amount</flux:table.column>
-                <flux:table.column align="right">Change</flux:table.column>
-            </flux:table.columns>
-                <flux:table.rows>
-                    @foreach ($this->balances as $i => $balance)
-                        @php
-                            $prev = $this->balances[$i + 1] ?? null;
-                            $change = $prev ? $balance->amount_in_cents - $prev->amount_in_cents : null;
-                            $checkinUrl = $balance->checkin
-                                ? route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $balance->checkin_id])
-                                : null;
-                        @endphp
-                        <flux:table.row>
-                            <flux:table.cell class="relative">
-                                @if ($checkinUrl)
-                                    <x-table-row-link :href="$checkinUrl" wire:navigate :first="true" />
-                                @endif
-                                {{ $balance->checked_in_at->format('M j, Y g:i A') }}
-                            </flux:table.cell>
-                            <flux:table.cell class="relative">
-                                @if ($checkinUrl)
-                                    <x-table-row-link :href="$checkinUrl" wire:navigate />
-                                @endif
-                                <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
-                            </flux:table.cell>
-                            <flux:table.cell class="relative">
-                                @if ($checkinUrl)
-                                    <x-table-row-link :href="$checkinUrl" wire:navigate />
-                                @endif
-                                <span class="tabular-nums">
-                                    @if ($change !== null && $change !== 0)
-                                        <span class="{{ $change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                            {{ $change > 0 ? '+' : '' }}{{ $this->formatCents($change) }}
-                                        </span>
-                                    @else
-                                        &mdash;
-                                    @endif
+    <flux:heading level="2" class="mt-12">Balance History</flux:heading>
+    <flux:table class="mt-4">
+        <flux:table.columns>
+            <flux:table.column>Date</flux:table.column>
+            <flux:table.column align="right">Amount</flux:table.column>
+            <flux:table.column align="right">Change</flux:table.column>
+        </flux:table.columns>
+        <flux:table.rows>
+            @foreach ($this->balances as $i => $balance)
+                @php
+                    $prev = $this->balances[$i + 1] ?? null;
+                    $change = $prev ? $balance->amount_in_cents - $prev->amount_in_cents : null;
+                    $checkinUrl = $balance->checkin
+                        ? route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $balance->checkin_id])
+                        : null;
+                @endphp
+                <flux:table.row>
+                    <flux:table.cell class="relative">
+                        @if ($checkinUrl)
+                            <x-table-row-link :href="$checkinUrl" wire:navigate :first="true" />
+                        @endif
+                        {{ $balance->checked_in_at->format('M j, Y g:i A') }}
+                    </flux:table.cell>
+                    <flux:table.cell class="relative">
+                        @if ($checkinUrl)
+                            <x-table-row-link :href="$checkinUrl" wire:navigate />
+                        @endif
+                        <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
+                    </flux:table.cell>
+                    <flux:table.cell class="relative">
+                        @if ($checkinUrl)
+                            <x-table-row-link :href="$checkinUrl" wire:navigate />
+                        @endif
+                        <span class="tabular-nums">
+                            @if ($change !== null && $change !== 0)
+                                <span class="{{ $change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                    {{ $change > 0 ? '+' : '' }}{{ $this->formatCents($change) }}
                                 </span>
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @endforeach
-                </flux:table.rows>
-            </flux:table>
-        @endif
+                            @else
+                                &mdash;
+                            @endif
+                        </span>
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforeach
+        </flux:table.rows>
+    </flux:table>
 
     <flux:separator class="mt-12" />
 
