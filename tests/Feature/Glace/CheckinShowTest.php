@@ -42,6 +42,7 @@ test('checkins.show displays checkin date and relative time', function () {
     $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
 
     $this->actingAs($user);
+    $this->travelTo(now());
 
     Livewire::test('pages::checkins.show', ['checkin' => $checkin->id])
         ->assertSee($checkin->checked_in_at->format('M j, Y g:i A'))
