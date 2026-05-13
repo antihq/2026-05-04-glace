@@ -3,17 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['team_id', 'name', 'sort_order'])]
+#[Fillable(['team_id', 'name'])]
 class Account extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     public function team(): BelongsTo
     {
@@ -23,10 +21,5 @@ class Account extends Model
     public function balances(): HasMany
     {
         return $this->hasMany(Balance::class)->orderByDesc('checked_in_at');
-    }
-
-    public function scopeOrdered(Builder $query): Builder
-    {
-        return $query->orderBy('sort_order')->orderBy('name');
     }
 }

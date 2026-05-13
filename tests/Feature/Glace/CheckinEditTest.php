@@ -51,7 +51,7 @@ test('checkin edit pre-populates existing balances', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin-edit', ['checkin' => $checkin->id])
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
         ->assertSet("balances.{$account->id}", '1500.00');
 });
 
@@ -69,10 +69,10 @@ test('checkin edit updates existing balance', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin-edit', ['checkin' => $checkin->id])
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
         ->set("balances.{$account->id}", '2500.50')
         ->call('update')
-        ->assertRedirect(route('checkins', ['current_team' => $user->currentTeam->slug]));
+        ->assertRedirect(route('checkins.show', ['current_team' => $user->currentTeam->slug, 'checkin' => $checkin->id]));
 
     $balance->refresh();
     expect($balance->amount_in_cents)->toBe(250050);
@@ -93,7 +93,7 @@ test('checkin edit creates balance for previously-skipped account', function () 
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin-edit', ['checkin' => $checkin->id])
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
         ->set("balances.{$account2->id}", '500.00')
         ->call('update');
 
@@ -117,33 +117,11 @@ test('checkin edit removes balance when field is cleared', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin-edit', ['checkin' => $checkin->id])
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
         ->set("balances.{$account->id}", '')
         ->call('update');
 
     expect(Balance::where('account_id', $account->id)->where('checkin_id', $checkin->id)->exists())->toBeFalse();
-});
-
-test('checkin edit deletes entire checkin and its balances', function () {
-    $user = User::factory()->create();
-    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
-    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
-
-    Balance::factory()->create([
-        'account_id' => $account->id,
-        'checkin_id' => $checkin->id,
-        'amount' => '100.00',
-        'checked_in_at' => $checkin->checked_in_at,
-    ]);
-
-    $this->actingAs($user);
-
-    Livewire::test('pages::checkin-edit', ['checkin' => $checkin->id])
-        ->call('delete')
-        ->assertRedirect(route('checkins', ['current_team' => $user->currentTeam->slug]));
-
-    expect(Checkin::find($checkin->id))->toBeNull();
-    expect(Balance::where('checkin_id', $checkin->id)->exists())->toBeFalse();
 });
 
 test('checkin edit validates non-numeric input', function () {
@@ -153,7 +131,7 @@ test('checkin edit validates non-numeric input', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin-edit', ['checkin' => $checkin->id])
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
         ->set("balances.{$account->id}", 'abc')
         ->call('update')
         ->assertHasErrors(["balances.{$account->id}"]);
@@ -169,7 +147,7 @@ test('checkin edit only shows current team accounts', function () {
 
     $this->actingAs($user);
 
-    $html = Livewire::test('pages::checkin-edit', ['checkin' => $checkin->id])->html();
+    $html = Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])->html();
     expect($html)->toContain('My Checking');
     expect($html)->not->toContain('Their Savings');
 });

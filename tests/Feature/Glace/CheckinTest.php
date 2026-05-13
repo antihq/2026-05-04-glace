@@ -11,7 +11,7 @@ test('checkin page can be rendered', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('checkin', ['current_team' => $user->currentTeam->slug]));
+        ->get(route('checkins.create', ['current_team' => $user->currentTeam->slug]));
 
     $response->assertOk();
 });
@@ -19,7 +19,7 @@ test('checkin page can be rendered', function () {
 test('checkin page redirects guests to login', function () {
     $user = User::factory()->create();
 
-    $response = $this->get(route('checkin', ['current_team' => $user->currentTeam->slug]));
+    $response = $this->get(route('checkins.create', ['current_team' => $user->currentTeam->slug]));
     $response->assertRedirect(route('login'));
 });
 
@@ -28,19 +28,19 @@ test('checkin shows empty state when no accounts', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->assertSee('No accounts to check in.');
 });
 
 test('checkin shows all account names simultaneously', function () {
     $user = User::factory()->create();
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking', 'sort_order' => 1]);
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings', 'sort_order' => 2]);
-    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Credit Card', 'sort_order' => 3]);
+    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking']);
+    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings']);
+    Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Credit Card']);
 
     $this->actingAs($user);
 
-    $html = Livewire::test('pages::checkin')->html();
+    $html = Livewire::test('pages::checkins.create')->html();
     expect($html)->toContain('Checking');
     expect($html)->toContain('Savings');
     expect($html)->toContain('Credit Card');
@@ -52,7 +52,7 @@ test('checkin creates balance records on submit', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->set("balances.{$account->id}", '1500.50')
         ->call('submit')
         ->assertRedirect(route('dashboard', ['current_team' => $user->currentTeam->slug]));
@@ -76,7 +76,7 @@ test('checkin stores cents correctly from dollar input', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->set("balances.{$account->id}", '12.34')
         ->call('submit');
 
@@ -86,12 +86,12 @@ test('checkin stores cents correctly from dollar input', function () {
 
 test('checkin only saves accounts with values entered', function () {
     $user = User::factory()->create();
-    $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking', 'sort_order' => 1]);
-    $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings', 'sort_order' => 2]);
+    $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking']);
+    $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings']);
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->set("balances.{$account1->id}", '100.00')
         ->call('submit');
 
@@ -106,7 +106,7 @@ test('checkin rejects non-numeric balance input', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->set("balances.{$account->id}", 'abc')
         ->call('submit')
         ->assertHasErrors(["balances.{$account->id}"]);
@@ -118,7 +118,7 @@ test('checkin submits empty checkin when no balances entered', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->call('submit')
         ->assertRedirect(route('dashboard', ['current_team' => $user->currentTeam->slug]));
 
@@ -128,13 +128,13 @@ test('checkin submits empty checkin when no balances entered', function () {
 
 test('checkin saves balances for multiple accounts', function () {
     $user = User::factory()->create();
-    $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 1]);
-    $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 2]);
-    $account3 = Account::factory()->create(['team_id' => $user->currentTeam->id, 'sort_order' => 3]);
+    $account1 = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $account2 = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $account3 = Account::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->set("balances.{$account1->id}", '100.00')
         ->set("balances.{$account2->id}", '250.50')
         ->set("balances.{$account3->id}", '50.00')
@@ -152,7 +152,7 @@ test('checkin handles negative balance input', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkin')
+    Livewire::test('pages::checkins.create')
         ->set("balances.{$account->id}", '-500.75')
         ->call('submit');
 
@@ -169,7 +169,7 @@ test('checkin only shows current team accounts', function () {
 
     $this->actingAs($user);
 
-    $html = Livewire::test('pages::checkin')->html();
+    $html = Livewire::test('pages::checkins.create')->html();
     expect($html)->toContain('My Checking');
     expect($html)->not->toContain('Their Savings');
 });

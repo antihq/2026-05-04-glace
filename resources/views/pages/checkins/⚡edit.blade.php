@@ -30,7 +30,7 @@ new #[Title('Edit Check-in')] class extends Component
 
         $this->checkinId = $checkinModel->id;
         $this->checkedInAt = $checkinModel->checked_in_at->format('M j, Y g:i A');
-        $this->accounts = Account::where('team_id', Auth::user()->currentTeam->id)->ordered()->get();
+        $this->accounts = Account::where('team_id', Auth::user()->currentTeam->id)->orderBy('name')->get();
 
         foreach ($checkinModel->balances as $balance) {
             $this->balances[$balance->account_id] = $balance->amount;
@@ -80,55 +80,34 @@ new #[Title('Edit Check-in')] class extends Component
 
         Flux::toast(variant: 'success', text: 'Check-in updated!');
 
-        $this->redirectRoute('checkins', ['current_team' => Auth::user()->currentTeam->slug], navigate: true);
-    }
-
-    public function delete(): void
-    {
-        $checkin = Checkin::where('id', $this->checkinId)
-            ->where('team_id', Auth::user()->currentTeam->id)
-            ->firstOrFail();
-
-        $checkin->delete();
-
-        Flux::toast(variant: 'success', text: 'Check-in deleted.');
-
-        $this->redirectRoute('checkins', ['current_team' => Auth::user()->currentTeam->slug], navigate: true);
+        $this->redirectRoute('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->checkinId], navigate: true);
     }
 }; ?>
 
-<div class="flex flex-col gap-3">
-    <div class="flex items-center gap-3">
-        <flux:heading class="whitespace-nowrap">Edit Check-in</flux:heading>
-        <flux:separator />
-    </div>
+<section class="w-full">
+    <div>
+        <flux:heading size="xl" level="1">Edit Check-in</flux:heading>
 
-    <div class="text-sm text-zinc-500">
-        {{ $this->checkedInAt }}
-        &middot; <flux:link :href="route('checkins', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Back to history</flux:link>
-    </div>
+        <form wire:submit="update" class="mt-6 space-y-8">
+            <div class="text-sm text-zinc-500">
+                {{ $this->checkedInAt }}
+            </div>
 
-    <div class="text-sm">Update balance amounts or leave blank to remove an account from this check-in.</div>
+            <div class="text-sm">Update balance amounts or leave blank to remove an account from this check-in.</div>
 
-    <form wire:submit="update" class="flex flex-col gap-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            @foreach ($this->accounts as $account)
-                <flux:input
-                    wire:model="balances.{{ $account->id }}"
-                    :label="$account->name"
-                    type="number"
-                    step="0.01"
-                    placeholder="Leave blank to remove"
-                    size="sm"
-                />
-            @endforeach
-        </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                @foreach ($this->accounts as $account)
+                    <flux:input
+                        wire:model="balances.{{ $account->id }}"
+                        :label="$account->name"
+                        type="number"
+                        step="0.01"
+                        placeholder="Leave blank to remove"
+                    />
+                @endforeach
+            </div>
 
-        <div class="flex items-center gap-3">
             <flux:button variant="primary" type="submit">Save Changes</flux:button>
-            <flux:button size="sm" variant="danger" wire:click="delete" wire:confirm="Are you sure you want to delete this check-in? This cannot be undone.">
-                Delete Check-in
-            </flux:button>
-        </div>
-    </form>
-</div>
+        </form>
+    </div>
+</section>

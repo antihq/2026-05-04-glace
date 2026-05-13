@@ -159,7 +159,7 @@ test('dashboard shows check-in time when some accounts were skipped', function (
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('Last check-in:')
+        ->assertSee('Last check-in')
         ->assertSee('Checking')
         ->assertSee('$1,000.00')
         ->assertSee('Savings');
@@ -180,11 +180,11 @@ test('dashboard shows dash for account that was never balanced', function () {
 
     $this->actingAs($user);
 
-    $html = Livewire::test('pages::dashboard')->html();
-    expect($html)->toContain('Checking');
-    expect($html)->toContain('$500.00');
-    expect($html)->toContain('Savings');
-    expect($html)->toContain('—');
+    Livewire::test('pages::dashboard')
+        ->assertSee('Checking')
+        ->assertSee('$500.00')
+        ->assertSee('Savings')
+        ->assertSeeHtml('&mdash;');
 });
 
 test('dashboard carries forward previous balance for skipped account', function () {
@@ -469,4 +469,113 @@ test('dashboard handles zero previous total without division error', function ()
 
     $html = Livewire::test('pages::dashboard')->html();
     expect($html)->toContain('$500.00');
+});
+
+test('dashboard shows Dashboard heading', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard')
+        ->assertSee('Dashboard');
+});
+
+test('dashboard shows Check In button when check-ins exist', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain(route('checkins.create', ['current_team' => $user->currentTeam->slug]));
+});
+
+test('dashboard hides Check In button when no check-ins', function () {
+    $user = User::factory()->create();
+    Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->not->toContain('Check In</flux:button>');
+});
+
+test('dashboard links to accounts index from description list', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain(route('accounts.index', ['current_team' => $user->currentTeam->slug]));
+});
+
+test('dashboard links to latest checkin show page', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain(route('checkins.show', ['current_team' => $user->currentTeam->slug, 'checkin' => $checkin->id]));
+});
+
+test('dashboard links to checkins index from total check-ins', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain(route('checkins.index', ['current_team' => $user->currentTeam->slug]));
+});
+
+test('dashboard links account rows to accounts show page', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking']);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain(route('accounts.show', ['current_team' => $user->currentTeam->slug, 'account' => $account->id]));
 });

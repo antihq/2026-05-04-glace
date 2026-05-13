@@ -17,7 +17,7 @@ new #[Title('Check In')] class extends Component
 
     public function mount(): void
     {
-        $this->accounts = Account::where('team_id', Auth::user()->currentTeam->id)->ordered()->get();
+        $this->accounts = Account::where('team_id', Auth::user()->currentTeam->id)->orderBy('name')->get();
     }
 
     public function submit(): void
@@ -58,37 +58,29 @@ new #[Title('Check In')] class extends Component
     }
 }; ?>
 
-<div class="flex flex-col gap-3">
+<section class="w-full">
     @if ($this->accounts->isEmpty())
-        <p class="text-sm text-zinc-500">
+        <flux:heading size="xl" level="1">Check In</flux:heading>
+        <flux:text class="mt-2.5">
             No accounts to check in.
-            <flux:link :href="route('accounts', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Add accounts</flux:link>
-        </p>
+            <flux:link :href="route('accounts.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Add accounts</flux:link> first.
+        </flux:text>
     @else
-        <form wire:submit="submit" class="flex flex-col gap-3">
-            <div class="flex items-center gap-3">
-                <flux:heading class="whitespace-nowrap">Check In</flux:heading>
-                <flux:separator />
-            </div>
+        <flux:heading size="xl" level="1">Check In</flux:heading>
+        <flux:text class="mt-1 max-w-prose">Record a snapshot of your current balances. Each check-in is timestamped and used to compute changes over time. Leave any account blank to skip it.</flux:text>
 
-            <div class="text-sm">Records a snapshot of your current balances. Each check-in is timestamped and used to compute changes over time. Leave any account blank to skip it &mdash; its balance carries forward from the last check-in.</div>
+        <form wire:submit="submit" class="mt-6 space-y-8 max-w-lg">
+            @foreach ($this->accounts as $account)
+                <flux:input
+                    wire:model="balances.{{ $account->id }}"
+                    :label="$account->name"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                />
+            @endforeach
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                @foreach ($this->accounts as $account)
-                    <flux:input
-                        wire:model="balances.{{ $account->id }}"
-                        :label="$account->name"
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        size="sm"
-                    />
-                @endforeach
-            </div>
-
-            <div class="flex items-center">
-                <flux:button variant="primary" type="submit">Check In</flux:button>
-            </div>
+            <flux:button variant="primary" type="submit">Check In</flux:button>
         </form>
     @endif
-</div>
+</section>

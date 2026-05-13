@@ -11,15 +11,15 @@ test('checkins page can be rendered', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('checkins', ['current_team' => $user->currentTeam->slug]));
+        ->get(route('checkins.index', ['current_team' => $user->currentTeam->slug]));
 
-    $response->assertOk();
+        $response->assertOk();
 });
 
 test('checkins page redirects guests to login', function () {
     $user = User::factory()->create();
 
-    $response = $this->get(route('checkins', ['current_team' => $user->currentTeam->slug]));
+    $response = $this->get(route('checkins.index', ['current_team' => $user->currentTeam->slug]));
     $response->assertRedirect(route('login'));
 });
 
@@ -28,7 +28,7 @@ test('checkins shows empty state when no checkins', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkins')
+    Livewire::test('pages::checkins.index')
         ->assertSee('No check-ins recorded.')
         ->assertSee('Check in now');
 });
@@ -41,7 +41,7 @@ test('checkins lists checkins ordered newest first', function () {
 
     $this->actingAs($user);
 
-    $html = Livewire::test('pages::checkins')->html();
+    $html = Livewire::test('pages::checkins.index')->html();
     $newestPos = strpos($html, $newest->checked_in_at->format('M j, Y'));
     $oldestPos = strpos($html, $oldest->checked_in_at->format('M j, Y'));
 
@@ -62,8 +62,8 @@ test('checkins shows account count per checkin', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkins')
-        ->assertSeeInOrder(['3', 'Edit']);
+    Livewire::test('pages::checkins.index')
+        ->assertSee('3 accounts');
 });
 
 test('checkins shows total per checkin', function () {
@@ -78,19 +78,18 @@ test('checkins shows total per checkin', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkins')
+    Livewire::test('pages::checkins.index')
         ->assertSee('$1,500.50');
 });
 
-test('checkins shows edit link per checkin', function () {
+test('checkins shows show link per checkin', function () {
     $user = User::factory()->create();
     $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
 
     $this->actingAs($user);
 
-    Livewire::test('pages::checkins')
-        ->assertSee('Edit')
-        ->assertSeeHtml(route('checkins.edit', ['current_team' => $user->currentTeam->slug, 'checkin' => $checkin->id]));
+    Livewire::test('pages::checkins.index')
+        ->assertSeeHtml(route('checkins.show', ['current_team' => $user->currentTeam->slug, 'checkin' => $checkin->id]));
 });
 
 test('checkins only shows current team checkins', function () {
@@ -102,7 +101,7 @@ test('checkins only shows current team checkins', function () {
 
     $this->actingAs($user);
 
-    $html = Livewire::test('pages::checkins')->html();
+    $html = Livewire::test('pages::checkins.index')->html();
     expect($html)->toContain($myCheckin->checked_in_at->format('M j, Y'));
     expect($html)->not->toContain($theirCheckin->checked_in_at->format('M j, Y'));
 });

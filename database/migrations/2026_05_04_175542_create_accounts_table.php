@@ -15,11 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('team_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->integer('sort_order')->default(0);
             $table->timestamps();
-            $table->softDeletes();
-
-            $table->index(['team_id', 'sort_order']);
         });
     }
 

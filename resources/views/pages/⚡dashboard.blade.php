@@ -14,16 +14,23 @@ new #[Title('Dashboard')] class extends Component
     #[Computed]
     public function accounts()
     {
-        return Account::where('team_id', Auth::user()->currentTeam->id)->ordered()->get();
+        return Account::where('team_id', Auth::user()->currentTeam->id)->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function latestCheckin()
+    {
+        return Checkin::where('team_id', Auth::user()->currentTeam->id)
+            ->orderByDesc('checked_in_at')
+            ->first();
     }
 
     #[Computed]
     public function latestCheckinTime()
     {
-        $time = Checkin::where('team_id', Auth::user()->currentTeam->id)
-            ->max('checked_in_at');
-
-        return $time ? Carbon::parse($time) : null;
+        return $this->latestCheckin?->checked_in_at
+            ? Carbon::parse($this->latestCheckin->checked_in_at)
+            : null;
     }
 
     #[Computed]
@@ -124,124 +131,148 @@ new #[Title('Dashboard')] class extends Component
     }
 }; ?>
 
-<div class="flex flex-col gap-3">
+<section class="w-full">
+    <div class="flex items-end justify-between gap-4">
+        <flux:heading size="xl" level="1">Dashboard</flux:heading>
+        @if ($this->latestCheckinTime)
+            <flux:button variant="primary" :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check In</flux:button>
+        @endif
+    </div>
+
     @if ($this->accounts->isEmpty())
-        <p class="text-sm text-zinc-500">
+        <p class="mt-2.5 text-sm text-zinc-500">
             No accounts tracked.
-            <flux:link :href="route('accounts', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Add accounts</flux:link>
+            <flux:link :href="route('accounts.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Add accounts</flux:link>
         </p>
     @elseif (! $this->latestCheckinTime)
-        <p class="text-sm text-zinc-500">
+        <p class="mt-2.5 text-sm text-zinc-500">
             No check-ins recorded.
-            <flux:link :href="route('checkin', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check in now</flux:link>
+            <flux:link :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check in now</flux:link>
         </p>
     @else
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div>
-                <div class="text-[11px] uppercase tracking-wider text-zinc-500">Total</div>
-                <div class="tabular-nums font-medium">{{ $this->formatCents($this->total) }}</div>
-            </div>
-            <div>
-                <div class="text-[11px] uppercase tracking-wider text-zinc-500">Previous</div>
+        <x-description.list class="mt-2.5">
+            <x-description.term>Total</x-description.term>
+            <x-description.details class="tabular-nums">{{ $this->formatCents($this->total) }}</x-description.details>
+
+            <x-description.term>Previous</x-description.term>
+            <x-description.details class="tabular-nums">
                 @if ($this->previousTotal !== null)
-                    <div class="tabular-nums">{{ $this->formatCents($this->previousTotal) }}</div>
+                    {{ $this->formatCents($this->previousTotal) }}
                 @else
-                    <div class="text-zinc-400">—</div>
+                    &mdash;
                 @endif
-            </div>
-            <div>
-                <div class="text-[11px] uppercase tracking-wider text-zinc-500">Change</div>
-                @if ($this->delta !== null && $this->delta !== 0)
-                    <div class="tabular-nums {{ $this->delta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                        {{ $this->delta > 0 ? '+' : '' }}{{ $this->formatCents($this->delta) }}
-                    </div>
-                @else
-                    <div class="text-zinc-400">—</div>
-                @endif
-            </div>
-            <div>
-                <div class="text-[11px] uppercase tracking-wider text-zinc-500">&Delta;%</div>
-                @if ($this->deltaPercent !== null)
-                    <div class="tabular-nums {{ $this->deltaPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                        {{ $this->formatPercent($this->deltaPercent) }}
-                    </div>
-                @else
-                    <div class="text-zinc-400">—</div>
-                @endif
-            </div>
-            <div>
-                <div class="text-[11px] uppercase tracking-wider text-zinc-500">Accounts</div>
-                <div class="tabular-nums">{{ $this->accounts->count() }}</div>
-            </div>
-        </div>
+            </x-description.details>
 
-        <div class="text-sm text-zinc-500">
-            Last check-in: {{ $this->latestCheckinTime->format('M j, Y g:i A') }} ({{ $this->latestCheckinTime->diffForHumans() }})
-            @if ($this->previousCheckinTime)
-                &middot; Previous: {{ $this->previousCheckinTime->format('M j, Y') }}
+            @if ($this->delta !== null && $this->delta !== 0)
+                <x-description.term>Change</x-description.term>
+                <x-description.details class="tabular-nums {{ $this->delta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                    {{ $this->delta > 0 ? '+' : '' }}{{ $this->formatCents($this->delta) }}
+                </x-description.details>
             @endif
-            &middot; {{ $this->checkinCount }} check-in{{ $this->checkinCount === 1 ? '' : 's' }}
-            &middot; <flux:link :href="route('checkin', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check in</flux:link>
-            &middot; <flux:link :href="route('checkins', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>History</flux:link>
-        </div>
 
-        <flux:separator />
+            @if ($this->deltaPercent !== null)
+                <x-description.term>Change %</x-description.term>
+                <x-description.details class="tabular-nums {{ $this->deltaPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                    {{ $this->formatPercent($this->deltaPercent) }}
+                </x-description.details>
+            @endif
 
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column>Account</flux:table.column>
-                <flux:table.column class="text-right">Current</flux:table.column>
-                <flux:table.column class="text-right">Previous</flux:table.column>
-                <flux:table.column class="text-right">&pm; Change</flux:table.column>
-                <flux:table.column class="text-right">&pm; %</flux:table.column>
-            </flux:table.columns>
-            <flux:table.rows>
-                @foreach ($this->accounts as $account)
-                    @php
-                        $current = $this->currentBalances->get($account->id);
-                        $previous = $this->previousBalances->get($account->id);
-                        $accountDelta = ($current && $previous) ? $current->amount_in_cents - $previous->amount_in_cents : null;
-                        $accountDeltaPercent = ($accountDelta !== null && $previous && $previous->amount_in_cents != 0)
-                            ? round(($accountDelta / abs($previous->amount_in_cents)) * 100, 2)
-                            : null;
-                    @endphp
-                    <flux:table.row>
-                        <flux:table.cell>{{ $account->name }}</flux:table.cell>
-                        <flux:table.cell class="text-right tabular-nums">
-                            @if ($current)
-                                {{ $this->formatCents($current->amount_in_cents) }}
-                            @else
-                                <span class="text-zinc-400">&mdash;</span>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell class="text-right tabular-nums">
-                            @if ($previous)
-                                {{ $this->formatCents($previous->amount_in_cents) }}
-                            @else
-                                <span class="text-zinc-400">&mdash;</span>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell class="text-right tabular-nums">
-                            @if ($accountDelta !== null && $accountDelta !== 0)
-                                <span class="{{ $accountDelta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                    {{ $accountDelta > 0 ? '+' : '' }}{{ $this->formatCents($accountDelta) }}
+            <x-description.term>Accounts</x-description.term>
+            <x-description.details>
+                <flux:link :accent="false" :href="route('accounts.index', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>
+                    {{ $this->accounts->count() }} {{ str()->plural('account', $this->accounts->count()) }} tracked
+                </flux:link>
+            </x-description.details>
+
+            <x-description.term>Last check-in</x-description.term>
+            <x-description.details>
+                <flux:link :accent="false" :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->latestCheckin->id])" wire:navigate>
+                    {{ $this->latestCheckinTime->format('M j, Y g:i A') }} ({{ $this->latestCheckinTime->diffForHumans() }})
+                </flux:link>
+            </x-description.details>
+
+            <x-description.term>Total check-ins</x-description.term>
+            <x-description.details>
+                <flux:link :accent="false" :href="route('checkins.index', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>
+                    {{ $this->checkinCount }} {{ str()->plural('check-in', $this->checkinCount) }}
+                </flux:link>
+            </x-description.details>
+        </x-description.list>
+
+        @if ($this->accounts->isNotEmpty())
+            <flux:heading level="2" class="mt-12">Account Balances</flux:heading>
+            <flux:table class="mt-4">
+                <flux:table.columns>
+                    <flux:table.column>Account</flux:table.column>
+                    <flux:table.column align="right">Current</flux:table.column>
+                    <flux:table.column align="right">Previous</flux:table.column>
+                    <flux:table.column align="right">Change</flux:table.column>
+                    <flux:table.column align="right">%</flux:table.column>
+                </flux:table.columns>
+                <flux:table.rows>
+                    @foreach ($this->accounts as $account)
+                        @php
+                            $current = $this->currentBalances->get($account->id);
+                            $previous = $this->previousBalances->get($account->id);
+                            $accountDelta = ($current && $previous) ? $current->amount_in_cents - $previous->amount_in_cents : null;
+                            $accountDeltaPercent = ($accountDelta !== null && $previous && $previous->amount_in_cents != 0)
+                                ? round(($accountDelta / abs($previous->amount_in_cents)) * 100, 2)
+                                : null;
+                            $accountUrl = route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $account->id]);
+                        @endphp
+                        <flux:table.row>
+                            <flux:table.cell class="relative">
+                                <x-table-row-link :href="$accountUrl" wire:navigate :first="true" />
+                                {{ $account->name }}
+                            </flux:table.cell>
+                            <flux:table.cell class="relative">
+                                <x-table-row-link :href="$accountUrl" wire:navigate />
+                                <span class="tabular-nums">
+                                    @if ($current)
+                                        {{ $this->formatCents($current->amount_in_cents) }}
+                                    @else
+                                        &mdash;
+                                    @endif
                                 </span>
-                            @else
-                                <span class="text-zinc-400">&mdash;</span>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell class="text-right tabular-nums">
-                            @if ($accountDeltaPercent !== null)
-                                <span class="{{ $accountDeltaPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                    {{ $this->formatPercent($accountDeltaPercent) }}
+                            </flux:table.cell>
+                            <flux:table.cell class="relative">
+                                <x-table-row-link :href="$accountUrl" wire:navigate />
+                                <span class="tabular-nums">
+                                    @if ($previous)
+                                        {{ $this->formatCents($previous->amount_in_cents) }}
+                                    @else
+                                        &mdash;
+                                    @endif
                                 </span>
-                            @else
-                                <span class="text-zinc-400">&mdash;</span>
-                            @endif
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
+                            </flux:table.cell>
+                            <flux:table.cell class="relative">
+                                <x-table-row-link :href="$accountUrl" wire:navigate />
+                                <span class="tabular-nums">
+                                    @if ($accountDelta !== null && $accountDelta !== 0)
+                                        <span class="{{ $accountDelta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                            {{ $accountDelta > 0 ? '+' : '' }}{{ $this->formatCents($accountDelta) }}
+                                        </span>
+                                    @else
+                                        &mdash;
+                                    @endif
+                                </span>
+                            </flux:table.cell>
+                            <flux:table.cell class="relative">
+                                <x-table-row-link :href="$accountUrl" wire:navigate />
+                                <span class="tabular-nums">
+                                    @if ($accountDeltaPercent !== null)
+                                        <span class="{{ $accountDeltaPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                            {{ $this->formatPercent($accountDeltaPercent) }}
+                                        </span>
+                                    @else
+                                        &mdash;
+                                    @endif
+                                </span>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        @endif
     @endif
-</div>
+</section>
