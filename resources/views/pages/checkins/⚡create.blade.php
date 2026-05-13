@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AccountType;
 use App\Models\Account;
 use App\Models\Balance;
 use App\Models\Checkin;
@@ -41,10 +42,21 @@ new #[Title('Check In')] class extends Component
             'checked_in_at' => $now,
         ]);
 
-        foreach ($this->balances as $accountId => $value) {
+        foreach ($this->accounts as $account) {
+            $value = $this->balances[$account->id] ?? null;
             if ($value !== null && $value !== '') {
+                if ($account->type === AccountType::CreditCard) {
+                    if ($account->credit_limit_in_cents !== null) {
+                        $limitDollars = (float) $account->credit_limit;
+                        $availableDollars = (float) $value;
+                        $value = -(abs($limitDollars - $availableDollars));
+                    } else {
+                        $value = -abs((float) $value);
+                    }
+                }
+
                 Balance::create([
-                    'account_id' => $accountId,
+                    'account_id' => $account->id,
                     'checkin_id' => $checkin->id,
                     'amount' => $value,
                     'checked_in_at' => $now,
@@ -71,13 +83,33 @@ new #[Title('Check In')] class extends Component
 
         <form wire:submit="submit" class="mt-6 space-y-8 max-w-lg">
             @foreach ($this->accounts as $account)
-                <flux:input
-                    wire:model="balances.{{ $account->id }}"
-                    :label="$account->name"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                />
+                @if ($account->type === AccountType::CreditCard && $account->credit_limit_in_cents !== null)
+                    <flux:input
+                        wire:model="balances.{{ $account->id }}"
+                        :label="$account->name . ' — Available credit'"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                    />
+                    <flux:text class="!mt-1 text-xs text-zinc-500">Balance owed = credit limit ({{ $account->credit_limit }}) − available credit</flux:text>
+                @elseif ($account->type === AccountType::CreditCard)
+                    <flux:input
+                        wire:model="balances.{{ $account->id }}"
+                        :label="$account->name"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                    />
+                    <flux:text class="!mt-1 text-xs text-zinc-500">Enter balance owed — stored as negative</flux:text>
+                @else
+                    <flux:input
+                        wire:model="balances.{{ $account->id }}"
+                        :label="$account->name"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                    />
+                @endif
             @endforeach
 
             <flux:button variant="primary" type="submit">Check In</flux:button>

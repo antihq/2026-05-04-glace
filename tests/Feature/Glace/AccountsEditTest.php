@@ -71,3 +71,69 @@ test('accounts.edit validates name is required', function () {
         ->call('update')
         ->assertHasErrors(['name']);
 });
+
+test('accounts.edit pre-populates account type', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id, 'type' => 'savings']);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.edit', ['account' => $account->id])
+        ->assertSet('type', 'savings');
+});
+
+test('accounts.edit pre-populates credit limit for credit card', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard(500000)->create(['team_id' => $user->currentTeam->id, 'name' => 'Visa']);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.edit', ['account' => $account->id])
+        ->assertSet('credit_limit', '5000.00');
+});
+
+test('accounts.edit updates account type', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id, 'type' => 'checking']);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.edit', ['account' => $account->id])
+        ->set('type', 'savings')
+        ->call('update')
+        ->assertHasNoErrors();
+
+    $account->refresh();
+    expect($account->type->value)->toBe('savings');
+});
+
+test('accounts.edit updates credit limit', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard(500000)->create(['team_id' => $user->currentTeam->id, 'name' => 'Visa']);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.edit', ['account' => $account->id])
+        ->set('credit_limit', '10000.00')
+        ->call('update')
+        ->assertHasNoErrors();
+
+    $account->refresh();
+    expect($account->credit_limit_in_cents)->toBe(1000000);
+});
+
+test('accounts.edit clears credit limit when type changes away from credit card', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard(500000)->create(['team_id' => $user->currentTeam->id, 'name' => 'Visa']);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.edit', ['account' => $account->id])
+        ->set('type', 'checking')
+        ->set('credit_limit', '5000.00')
+        ->call('update')
+        ->assertHasNoErrors();
+
+    $account->refresh();
+    expect($account->credit_limit_in_cents)->toBeNull();
+});

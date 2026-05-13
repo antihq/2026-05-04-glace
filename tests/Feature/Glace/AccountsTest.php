@@ -259,3 +259,85 @@ test('accounts show links latest balance to checkin show page', function () {
     $html = Livewire::test('pages::accounts.show', ['account' => $account->id])->html();
     expect($html)->toContain(route('checkins.show', ['current_team' => $user->currentTeam->slug, 'checkin' => $checkin->id]));
 });
+
+test('account can be created with a specific type', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.create')
+        ->set('name', 'My Savings')
+        ->set('type', 'savings')
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('accounts', [
+        'team_id' => $user->currentTeam->id,
+        'name' => 'My Savings',
+        'type' => 'savings',
+    ]);
+});
+
+test('credit card account can be created with credit limit', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.create')
+        ->set('name', 'Visa')
+        ->set('type', 'credit_card')
+        ->set('credit_limit', '5000.00')
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $account = Account::where('team_id', $user->currentTeam->id)->where('name', 'Visa')->first();
+    expect($account)->not->toBeNull();
+    expect($account->type->value)->toBe('credit_card');
+    expect($account->credit_limit_in_cents)->toBe(500000);
+});
+
+test('credit card account can be created without credit limit', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.create')
+        ->set('name', 'Revolut')
+        ->set('type', 'credit_card')
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $account = Account::where('team_id', $user->currentTeam->id)->where('name', 'Revolut')->first();
+    expect($account)->not->toBeNull();
+    expect($account->type->value)->toBe('credit_card');
+    expect($account->credit_limit_in_cents)->toBeNull();
+});
+
+test('credit limit validation rejects non-numeric input', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.create')
+        ->set('name', 'Visa')
+        ->set('type', 'credit_card')
+        ->set('credit_limit', 'abc')
+        ->call('submit')
+        ->assertHasErrors(['credit_limit']);
+});
+
+test('credit limit is cleared when type is not credit card', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::accounts.create')
+        ->set('name', 'Checking')
+        ->set('type', 'checking')
+        ->set('credit_limit', '5000.00')
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $account = Account::where('team_id', $user->currentTeam->id)->where('name', 'Checking')->first();
+    expect($account->credit_limit_in_cents)->toBeNull();
+});

@@ -151,3 +151,83 @@ test('checkin edit only shows current team accounts', function () {
     expect($html)->toContain('My Checking');
     expect($html)->not->toContain('Their Savings');
 });
+
+test('checkin edit pre-populates positive value for credit card without credit limit', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard()->create(['team_id' => $user->currentTeam->id, 'name' => 'Revolut']);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '-500.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
+        ->assertSet("balances.{$account->id}", '500.00');
+});
+
+test('checkin edit pre-populates available credit for credit card with credit limit', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard(1000000)->create(['team_id' => $user->currentTeam->id, 'name' => 'Visa']);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '-250.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
+        ->assertSet("balances.{$account->id}", '9750.00');
+});
+
+test('checkin edit auto-negates credit card balance without credit limit on update', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    $balance = Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '-300.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
+        ->set("balances.{$account->id}", '600.00')
+        ->call('update');
+
+    $balance->refresh();
+    expect($balance->amount_in_cents)->toBe(-60000);
+});
+
+test('checkin edit calculates owed from credit limit and available credit on update', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard(500000)->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    $balance = Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '-100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.edit', ['checkin' => $checkin->id])
+        ->set("balances.{$account->id}", '3500.00')
+        ->call('update');
+
+    $balance->refresh();
+    expect($balance->amount_in_cents)->toBe(-150000);
+});

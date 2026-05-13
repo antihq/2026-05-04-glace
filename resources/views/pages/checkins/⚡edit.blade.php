@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AccountType;
 use App\Models\Account;
 use App\Models\Balance;
 use App\Models\Checkin;
@@ -33,7 +34,17 @@ new #[Title('Edit Check-in')] class extends Component
         $this->accounts = Account::where('team_id', Auth::user()->currentTeam->id)->orderBy('name')->get();
 
         foreach ($checkinModel->balances as $balance) {
-            $this->balances[$balance->account_id] = $balance->amount;
+            $amount = $balance->amount;
+            $account = $this->accounts->firstWhere('id', $balance->account_id);
+            if ($account && $account->type === AccountType::CreditCard) {
+                if ($account->credit_limit_in_cents !== null) {
+                    $availableDollars = (float) $account->credit_limit - abs((float) $balance->amount);
+                    $amount = number_format($availableDollars, 2, '.', '');
+                } else {
+                    $amount = number_format(abs((float) $amount), 2, '.', '');
+                }
+            }
+            $this->balances[$balance->account_id] = $amount;
         }
     }
 
@@ -61,6 +72,16 @@ new #[Title('Edit Check-in')] class extends Component
             $existingBalance = $checkin->balances->firstWhere('account_id', $account->id);
 
             if ($value !== null && $value !== '') {
+                if ($account->type === AccountType::CreditCard) {
+                    if ($account->credit_limit_in_cents !== null) {
+                        $limitDollars = (float) $account->credit_limit;
+                        $availableDollars = (float) $value;
+                        $value = -(abs($limitDollars - $availableDollars));
+                    } else {
+                        $value = -abs((float) $value);
+                    }
+                }
+
                 if ($existingBalance) {
                     $existingBalance->update(['amount' => $value]);
                 } else {
@@ -97,13 +118,35 @@ new #[Title('Edit Check-in')] class extends Component
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 @foreach ($this->accounts as $account)
-                    <flux:input
-                        wire:model="balances.{{ $account->id }}"
-                        :label="$account->name"
-                        type="number"
-                        step="0.01"
-                        placeholder="Leave blank to remove"
-                    />
+                    <div>
+                        @if ($account->type === AccountType::CreditCard && $account->credit_limit_in_cents !== null)
+                            <flux:input
+                                wire:model="balances.{{ $account->id }}"
+                                :label="$account->name . ' — Available credit'"
+                                type="number"
+                                step="0.01"
+                                placeholder="Leave blank to remove"
+                            />
+                            <flux:text class="!mt-1 text-xs text-zinc-500">Balance owed = credit limit ({{ $account->credit_limit }}) − available credit</flux:text>
+                        @elseif ($account->type === AccountType::CreditCard)
+                            <flux:input
+                                wire:model="balances.{{ $account->id }}"
+                                :label="$account->name"
+                                type="number"
+                                step="0.01"
+                                placeholder="Leave blank to remove"
+                            />
+                            <flux:text class="!mt-1 text-xs text-zinc-500">Enter balance owed — stored as negative</flux:text>
+                        @else
+                            <flux:input
+                                wire:model="balances.{{ $account->id }}"
+                                :label="$account->name"
+                                type="number"
+                                step="0.01"
+                                placeholder="Leave blank to remove"
+                            />
+                        @endif
+                    </div>
                 @endforeach
             </div>
 

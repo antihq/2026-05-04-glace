@@ -173,3 +173,65 @@ test('checkin only shows current team accounts', function () {
     expect($html)->toContain('My Checking');
     expect($html)->not->toContain('Their Savings');
 });
+
+test('checkin auto-negates credit card balance without credit limit', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard()->create(['team_id' => $user->currentTeam->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.create')
+        ->set("balances.{$account->id}", '500.00')
+        ->call('submit');
+
+    $balance = Balance::first();
+    expect($balance->amount_in_cents)->toBe(-50000);
+});
+
+test('checkin calculates owed from credit limit and available credit', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard(1000000)->create(['team_id' => $user->currentTeam->id, 'name' => 'Visa']);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.create')
+        ->set("balances.{$account->id}", '7500.00')
+        ->call('submit');
+
+    $balance = Balance::first();
+    expect($balance->amount_in_cents)->toBe(-250000);
+});
+
+test('checkin stores zero when available credit equals credit limit', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->creditCard(1000000)->create(['team_id' => $user->currentTeam->id]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.create')
+        ->set("balances.{$account->id}", '10000.00')
+        ->call('submit');
+
+    $balance = Balance::first();
+    expect($balance->amount_in_cents)->toBe(0);
+});
+
+test('checkin shows available credit label for credit card with limit', function () {
+    $user = User::factory()->create();
+    Account::factory()->creditCard(500000)->create(['team_id' => $user->currentTeam->id, 'name' => 'Visa']);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::checkins.create')->html();
+    expect($html)->toContain('Available credit');
+});
+
+test('checkin shows balance owed hint for credit card without limit', function () {
+    $user = User::factory()->create();
+    Account::factory()->creditCard()->create(['team_id' => $user->currentTeam->id, 'name' => 'Revolut']);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::checkins.create')->html();
+    expect($html)->toContain('Enter balance owed');
+});
