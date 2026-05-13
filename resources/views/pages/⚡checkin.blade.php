@@ -52,7 +52,7 @@ new #[Title('Check In')] class extends Component
             }
         }
 
-        Flux::toast(variant: 'success', text: __('Check-in complete!'));
+        Flux::toast(variant: 'success', text: 'Check-in complete!');
 
         $this->redirectRoute('dashboard', ['current_team' => Auth::user()->currentTeam->slug], navigate: true);
     }
@@ -67,7 +67,7 @@ new #[Title('Check In')] class extends Component
     @else
         <form wire:submit="submit" class="flex flex-col gap-3">
             <div class="flex items-center gap-3">
-                <flux:heading class="whitespace-nowrap">{{ __('Check In') }}</flux:heading>
+                <flux:heading class="whitespace-nowrap">Check In</flux:heading>
                 <flux:separator />
             </div>
 
@@ -87,7 +87,7 @@ new #[Title('Check In')] class extends Component
             </div>
 
             <div class="flex items-center">
-                <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit">{{ __('Check In') }}</flux:button>
+                <flux:button variant="primary" type="submit">Check In</flux:button>
             </div>
         </form>
     @endif

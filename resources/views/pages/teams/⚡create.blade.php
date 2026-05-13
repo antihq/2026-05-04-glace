@@ -1,14 +1,25 @@
 <?php
 
 use App\Actions\Teams\CreateTeam;
+use App\Enums\TeamPermission;
 use App\Rules\TeamName;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Create team')] class extends Component {
+new #[Title('Create Team')] class extends Component {
     public string $name = '';
+
+    #[Computed]
+    public function ownerPermissions(): array
+    {
+        return collect(TeamPermission::cases())
+            ->map(fn ($p) => $p->value)
+            ->values()
+            ->all();
+    }
 
     public function createTeam(CreateTeam $createTeam): void
     {
@@ -18,38 +29,41 @@ new #[Title('Create team')] class extends Component {
 
         $team = $createTeam->handle(Auth::user(), $validated['name']);
 
-        Flux::toast(variant: 'success', text: __('Team created.'));
+        $this->reset('name');
 
-        $this->redirectRoute('teams.edit', ['team' => $team->slug], navigate: true);
+        Flux::toast(variant: 'success', text: 'Team created.');
+
+        $this->redirectRoute('teams.show', ['team' => $team->slug], navigate: true);
     }
 }; ?>
 
-<div>
-    <div class="flex items-center gap-3">
-        <flux:heading class="whitespace-nowrap">{{ __('Create team') }}</flux:heading>
-        <flux:separator />
-    </div>
+<section class="w-full">
+    <flux:heading size="xl" level="1">Create a new team</flux:heading>
 
-    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-            <form wire:submit="createTeam" class="space-y-8">
-                <flux:input size="sm" wire:model="name" :label="__('Team name')" type="text" required autofocus data-test="create-team-name" />
-
-                <flux:button size="sm" variant="primary" icon:trailing="arrow-right" type="submit" data-test="create-team-submit">
-                    {{ __('Create team') }}
-                </flux:button>
-            </form>
+    <form wire:submit="createTeam" class="mt-6 space-y-8">
+        <div class="max-w-md">
+            <flux:input wire:model.live.debounce.300ms="name" label="Team name" type="text" required autofocus data-test="create-team-name" />
         </div>
 
-        <div class="text-sm/6 space-y-3">
-            <p>Give your team a name to get started. After creating the team, you can invite members and manage roles.</p>
-        </div>
-    </div>
-
-    <div class="flex items-center mt-8">
-        <flux:button size="sm" :href="route('teams.index')" wire:navigate icon="arrow-left" class="rounded-full!">
-            {{ __('Return to Teams') }}
+        <flux:button variant="primary" type="submit" data-test="create-team-submit">
+            Create team
         </flux:button>
-        <flux:separator class="ml-3" />
-    </div>
-</div>
+    </form>
+
+    <flux:heading level="2" class="mt-12">On creation</flux:heading>
+
+    <flux:separator class="mt-2" />
+
+    <x-description.list>
+        <x-description.term>Role assigned</x-description.term>
+        <x-description.details>
+            You are assigned the Owner role with all permissions:
+            @foreach($this->ownerPermissions as $permission)
+                <x-code>{{ $permission }}</x-code>{{ $loop->last ? '' : ',' }}
+            @endforeach
+        </x-description.details>
+
+        <x-description.term>Active team</x-description.term>
+        <x-description.details>This team becomes your active team across the application.</x-description.details>
+    </x-description.list>
+</section>

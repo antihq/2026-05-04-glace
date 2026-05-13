@@ -116,5 +116,5 @@ test('checked_in_at is cast to datetime', function () {
         'checked_in_at' => '2026-01-15 10:30:00',
     ]);
 
-    expect($balance->checked_in_at)->toBeInstanceOf(\DateTimeInterface::class);
+    expect($balance->checked_in_at)->toBeInstanceOf(DateTimeInterface::class);
 });

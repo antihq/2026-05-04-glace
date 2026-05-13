@@ -1,68 +1,52 @@
-<x-layouts::app :title="__('Log in')">
-    <div>
-        <div class="flex items-center gap-3">
-            <flux:heading class="whitespace-nowrap">{{ __('Log in') }}</flux:heading>
-            <flux:separator />
-        </div>
+<x-layouts::guest title="Sign in">
+    <section class="w-full">
+        <div class="mx-auto max-w-md">
+            <flux:heading size="xl" level="1">Sign in to your account</flux:heading>
 
-        <div class="mt-8 max-w-md">
-            <x-auth-session-status :status="session('status')" />
+            @if (session('status'))
+                <flux:text color="green" class="mt-4 font-medium">{{ session('status') }}</flux:text>
+            @endif
 
-            <form method="POST" action="{{ route('login.store') }}" class="space-y-5">
+            <form method="POST" action="{{ route('login.store') }}" class="mt-6 space-y-8">
                 @csrf
 
-                <flux:input
-                    size="sm"
-                    name="email"
-                    :label="__('Email address')"
-                    :value="old('email')"
-                    type="email"
-                    required
-                    autofocus
-                    autocomplete="email"
-                    placeholder="email@example.com"
-                />
-
-                <div class="relative">
+                <flux:field>
+                    <flux:label>Email address</flux:label>
                     <flux:input
-                        size="sm"
+                        name="email"
+                        :value="old('email')"
+                        type="email"
+                        required
+                        autofocus
+                        autocomplete="email"
+                    />
+                    <flux:error name="email" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>Password</flux:label>
+                    <flux:input
                         name="password"
-                        :label="__('Password')"
                         type="password"
                         required
                         autocomplete="current-password"
-                        :placeholder="__('Password')"
                         viewable
                     />
-
+                    <flux:error name="password" />
                     @if (Route::has('password.request'))
-                        <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
-                            {{ __('Forgot your password?') }}
-                        </flux:link>
+                        <flux:text class="mt-3">
+                            <flux:link :href="route('password.request')" :accent="false" wire:navigate>Reset password</flux:link>
+                        </flux:text>
                     @endif
-                </div>
+                </flux:field>
 
-                <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
+                <flux:checkbox name="remember" label="Remember me" :checked="old('remember')" />
 
-                <div class="flex items-center">
-                    <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit" data-test="login-button">
-                        {{ __('Log in') }}
-                    </flux:button>
-                </div>
+                <flux:button variant="primary" type="submit" data-test="login-button">
+                    Sign in
+                </flux:button>
             </form>
 
-            @if (Route::has('register'))
-                <flux:text class="mt-4">
-                    No account? <flux:link :href="route('register')" wire:navigate>Sign up</flux:link>
-                </flux:text>
-            @endif
         </div>
-
-        <div class="flex items-center mt-8">
-            <flux:button size="sm" href="/" wire:navigate icon="arrow-left" class="rounded-full!">
-                {{ __('Return to home') }}
-            </flux:button>
-            <flux:separator class="ml-3" />
-        </div>
-    </div>
-</x-layouts::app>
+    </section>
+</x-layouts::guest>

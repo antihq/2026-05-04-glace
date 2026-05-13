@@ -36,7 +36,7 @@ new #[Title('Accounts')] class extends Component
 
         $this->reset('newAccountName');
 
-        Flux::toast(variant: 'success', text: __('Account added.'));
+        Flux::toast(variant: 'success', text: 'Account added.');
     }
 
     public function deleteAccount(int $accountId): void
@@ -50,7 +50,7 @@ new #[Title('Accounts')] class extends Component
 
         $account->delete();
 
-        Flux::toast(variant: 'success', text: __('Account removed.'));
+        Flux::toast(variant: 'success', text: 'Account removed.');
     }
 }; ?>
 
@@ -63,7 +63,7 @@ new #[Title('Accounts')] class extends Component
             placeholder="Account name"
             class="flex-1"
         />
-        <flux:button variant="primary" type="submit">{{ __('Add') }}</flux:button>
+        <flux:button variant="primary" type="submit">Add</flux:button>
     </form>
 
     @if ($this->accounts->isNotEmpty())
@@ -78,7 +78,7 @@ new #[Title('Accounts')] class extends Component
                                 size="sm"
                                 icon="trash"
                                 wire:click="deleteAccount({{ $account->id }})"
-                                wire:confirm="{{ __('Delete this account? Its balance history will also be removed.') }}"
+                                wire:confirm="Delete this account? Its balance history will also be removed."
                             />
                         </flux:table.cell>
                     </flux:table.row>

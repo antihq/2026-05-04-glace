@@ -1,35 +1,32 @@
-<x-layouts::app :title="__('Confirm password')">
-    <div>
-        <div class="flex items-center gap-3">
-            <flux:heading class="whitespace-nowrap">{{ __('Confirm password') }}</flux:heading>
-            <flux:separator />
-        </div>
+<x-layouts::guest title="Confirm password">
+    <section class="w-full">
+        <div class="mx-auto max-w-md">
+            <flux:heading size="xl" level="1">Confirm password</flux:heading>
 
-        <div class="mt-8 max-w-md">
-            <x-auth-session-status :status="session('status')" />
+            @if (session('status'))
+                <flux:text color="green" class="mt-4 font-medium">{{ session('status') }}</flux:text>
+            @endif
 
-            <p class="text-sm mb-5">You're confirming your password because you're about to perform a sensitive action — changing your email, adjusting security settings, or deleting your account. Enter your current password to continue.</p>
-
-            <form method="POST" action="{{ route('password.confirm.store') }}" class="space-y-5">
+            <form method="POST" action="{{ route('password.confirm.store') }}" class="mt-4 space-y-5">
                 @csrf
 
-                <flux:input
-                    size="sm"
-                    name="password"
-                    :label="__('Password')"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    :placeholder="__('Password')"
-                    viewable
-                />
+                <flux:field>
+                    <flux:label>Password</flux:label>
+                    <flux:input
+                        name="password"
+                        type="password"
+                        required
+                        autocomplete="current-password"
+                        viewable
+                        autofocus
+                    />
+                    <flux:error name="password" />
+                </flux:field>
 
-                <div class="flex items-center">
-                    <flux:button size="sm" variant="primary" color="emerald" icon:trailing="arrow-right" type="submit" data-test="confirm-password-button">
-                        {{ __('Confirm') }}
-                    </flux:button>
-                </div>
+                <flux:button variant="primary" type="submit" data-test="confirm-password-button">
+                    Confirm
+                </flux:button>
             </form>
         </div>
-    </div>
-</x-layouts::app>
+    </section>
+</x-layouts::guest>

@@ -288,7 +288,7 @@ test('dashboard computes delta correctly when account was skipped', function () 
     $expectedDelta = $currentTotal - $previousTotal;
 
     Livewire::test('pages::dashboard')
-        ->assertSee('+$' . number_format($expectedDelta / 100, 2));
+        ->assertSee('+$'.number_format($expectedDelta / 100, 2));
 });
 
 test('dashboard does not show other teams data', function () {

@@ -1,37 +1,33 @@
-<x-layouts::app :title="__('Email verification')">
-    <div>
-        <div class="flex items-center gap-3">
-            <flux:heading class="whitespace-nowrap">{{ __('Email verification') }}</flux:heading>
-            <flux:separator />
-        </div>
-
-        <div class="mt-8 max-w-md space-y-4">
-            <p class="text-sm">
-                {{ __('Please verify your email address by clicking on the link we just emailed to you.') }}
-                Check your inbox and spam folder. The verification link expires after 60 minutes.
-            </p>
+<x-layouts::guest title="Email verification">
+    <section class="w-full">
+        <div class="mx-auto max-w-md">
+            <flux:heading size="xl" level="1">Verify your email</flux:heading>
 
             @if (session('status') == 'verification-link-sent')
-                <p class="text-sm font-medium !dark:text-green-400 !text-green-600">
-                    {{ __('A new verification link has been sent to the email address you provided during registration.') }}
-                </p>
+                <flux:text class="mt-1">
+                    A new link has been sent to <x-strong>{{ auth()->user()->email }}</x-strong>.
+                </flux:text>
+            @else
+                <flux:text class="mt-1">A verification link has been sent to <x-strong>{{ auth()->user()->email }}</x-strong>. Click it to complete registration.</flux:text>
             @endif
 
-            <div class="flex items-center gap-3">
+            <div class="mt-4 space-y-8">
                 <form method="POST" action="{{ route('verification.send') }}">
                     @csrf
-                    <flux:button size="sm" type="submit" variant="primary" color="emerald" icon:trailing="arrow-right">
-                        {{ __('Resend verification email') }}
+                    <flux:button type="submit" variant="primary">
+                        Resend verification email
                     </flux:button>
                 </form>
 
+                <flux:separator />
+
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <flux:button size="sm" variant="ghost" type="submit" data-test="logout-button">
-                        {{ __('Log out') }}
+                    <flux:button type="submit" data-test="logout-button">
+                        Sign out
                     </flux:button>
                 </form>
             </div>
         </div>
-    </div>
-</x-layouts::app>
+    </section>
+</x-layouts::guest>

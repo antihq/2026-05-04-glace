@@ -78,7 +78,7 @@ new #[Title('Edit Check-in')] class extends Component
             }
         }
 
-        Flux::toast(variant: 'success', text: __('Check-in updated!'));
+        Flux::toast(variant: 'success', text: 'Check-in updated!');
 
         $this->redirectRoute('checkins', ['current_team' => Auth::user()->currentTeam->slug], navigate: true);
     }
@@ -91,7 +91,7 @@ new #[Title('Edit Check-in')] class extends Component
 
         $checkin->delete();
 
-        Flux::toast(variant: 'success', text: __('Check-in deleted.'));
+        Flux::toast(variant: 'success', text: 'Check-in deleted.');
 
         $this->redirectRoute('checkins', ['current_team' => Auth::user()->currentTeam->slug], navigate: true);
     }
@@ -99,7 +99,7 @@ new #[Title('Edit Check-in')] class extends Component
 
 <div class="flex flex-col gap-3">
     <div class="flex items-center gap-3">
-        <flux:heading class="whitespace-nowrap">{{ __('Edit Check-in') }}</flux:heading>
+        <flux:heading class="whitespace-nowrap">Edit Check-in</flux:heading>
         <flux:separator />
     </div>
 
@@ -125,9 +125,9 @@ new #[Title('Edit Check-in')] class extends Component
         </div>
 
         <div class="flex items-center gap-3">
-            <flux:button size="sm" variant="primary" color="emerald" type="submit">{{ __('Save Changes') }}</flux:button>
+            <flux:button variant="primary" type="submit">Save Changes</flux:button>
             <flux:button size="sm" variant="danger" wire:click="delete" wire:confirm="Are you sure you want to delete this check-in? This cannot be undone.">
-                {{ __('Delete Check-in') }}
+                Delete Check-in
             </flux:button>
         </div>
     </form>

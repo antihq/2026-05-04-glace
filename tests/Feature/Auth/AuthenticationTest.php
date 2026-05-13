@@ -24,6 +24,18 @@ test('users can authenticate using the login screen', function () {
     $this->assertAuthenticated();
 });
 
+test('login redirects to team dashboard', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $response->assertRedirect("/{$team->slug}/dashboard");
+});
+
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();
 

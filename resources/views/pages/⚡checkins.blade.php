@@ -27,7 +27,7 @@ new #[Title('Check-in History')] class extends Component
 
 <div class="flex flex-col gap-3">
     <div class="flex items-center gap-3">
-        <flux:heading class="whitespace-nowrap">{{ __('Check-in History') }}</flux:heading>
+        <flux:heading class="whitespace-nowrap">Check-in History</flux:heading>
         <flux:separator />
     </div>
 

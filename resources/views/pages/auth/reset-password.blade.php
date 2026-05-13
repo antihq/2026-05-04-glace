@@ -1,58 +1,59 @@
-<x-layouts::app :title="__('Reset password')">
-    <div>
-        <div class="flex items-center gap-3">
-            <flux:heading class="whitespace-nowrap">{{ __('Reset password') }}</flux:heading>
-            <flux:separator />
-        </div>
+<x-layouts::guest title="Reset password">
+    <section class="w-full">
+        <div class="mx-auto max-w-md">
+            <flux:heading size="xl" level="1">Reset password</flux:heading>
+            <flux:text class="mt-1">Choose a new password. This reset link expires after use.</flux:text>
 
-        <div class="mt-8 max-w-md">
-            <x-auth-session-status :status="session('status')" />
+            @if (session('status'))
+                <flux:text color="green" class="mt-4 font-medium">{{ session('status') }}</flux:text>
+            @endif
 
-            <p class="text-sm mb-5">Choose a new password. Minimum 8 characters. Mix uppercase, lowercase, numbers, and symbols for a stronger password. After resetting, you'll be redirected to the login page.</p>
-
-            <form method="POST" action="{{ route('password.update') }}" class="space-y-5">
+            <form method="POST" action="{{ route('password.update') }}" class="mt-4 space-y-5">
                 @csrf
-
                 <input type="hidden" name="token" value="{{ request()->route('token') }}">
 
-                <flux:input
-                    size="sm"
-                    name="email"
-                    value="{{ request('email') }}"
-                    :label="__('Email')"
-                    type="email"
-                    required
-                    autocomplete="email"
-                />
+                <flux:field>
+                    <flux:label>Email address</flux:label>
+                    <flux:input
+                        name="email"
+                        value="{{ request('email') }}"
+                        type="email"
+                        required
+                        autocomplete="email"
+                        readonly
+                    />
+                    <flux:error name="email" />
+                </flux:field>
 
-                <flux:input
-                    size="sm"
-                    name="password"
-                    :label="__('Password')"
-                    type="password"
-                    required
-                    autocomplete="new-password"
-                    :placeholder="__('Password')"
-                    viewable
-                />
+                <flux:field>
+                    <flux:label>Password</flux:label>
+                    <flux:input
+                        name="password"
+                        type="password"
+                        required
+                        autocomplete="new-password"
+                        viewable
+                    />
+                    <flux:error name="password" />
+                    <flux:description>Minimum 8 characters, at least one uppercase letter, at least one lowercase letter, at least one number.</flux:description>
+                </flux:field>
 
-                <flux:input
-                    size="sm"
-                    name="password_confirmation"
-                    :label="__('Confirm password')"
-                    type="password"
-                    required
-                    autocomplete="new-password"
-                    :placeholder="__('Confirm password')"
-                    viewable
-                />
+                <flux:field>
+                    <flux:label>Confirm password</flux:label>
+                    <flux:input
+                        name="password_confirmation"
+                        type="password"
+                        required
+                        autocomplete="new-password"
+                        viewable
+                    />
+                    <flux:error name="password_confirmation" />
+                </flux:field>
 
-                <div class="flex items-center">
-                    <flux:button size="sm" type="submit" variant="primary" color="emerald" icon:trailing="arrow-right" data-test="reset-password-button">
-                        {{ __('Reset password') }}
-                    </flux:button>
-                </div>
+                <flux:button type="submit" variant="primary" data-test="reset-password-button">
+                    Reset password
+                </flux:button>
             </form>
         </div>
-    </div>
-</x-layouts::app>
+    </section>
+</x-layouts::guest>
