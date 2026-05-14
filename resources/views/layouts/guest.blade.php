@@ -24,7 +24,7 @@
 
                 @auth
                     <flux:navbar.item :href="route('dashboard')" :accent="false" wire:navigate>
-                        Dashboard
+                        Overview
                     </flux:navbar.item>
                 @endauth
             </flux:navbar>

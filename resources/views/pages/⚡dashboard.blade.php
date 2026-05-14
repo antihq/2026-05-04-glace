@@ -9,7 +9,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Dashboard')] class extends Component
+new #[Title('Overview')] class extends Component
 {
     #[Computed]
     public function accounts()
@@ -133,8 +133,8 @@ new #[Title('Dashboard')] class extends Component
 
 <section class="w-full">
     <div class="flex items-end justify-between gap-4">
-        <flux:heading size="xl" level="1">Dashboard</flux:heading>
-        <flux:button variant="primary" :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check In</flux:button>
+        <flux:heading size="xl" level="1">Overview</flux:heading>
+        <flux:button variant="primary" :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>New Check-in</flux:button>
     </div>
 
     <x-description.list class="mt-2.5">
@@ -174,12 +174,12 @@ new #[Title('Dashboard')] class extends Component
         <x-description.term>Last check-in</x-description.term>
         <x-description.details>
             @if ($this->latestCheckinTime)
-                <div class="flex items-center gap-3">
-                    <flux:link :accent="false" :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->latestCheckin->id])" wire:navigate>
-                        {{ $this->latestCheckinTime->format('M j, Y g:i A') }}
-                    </flux:link>
-                    <flux:badge>{{ $this->latestCheckinTime->diffForHumans() }}</flux:badge>
-                </div>
+                <flux:link :accent="false" :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->latestCheckin->id])" wire:navigate>
+                    {{ $this->latestCheckinTime->format('M j, Y g:i A') }}
+                </flux:link>
+                <span class="text-zinc-500 text-sm/6 sm:text-xs/6">
+                    {{ $this->latestCheckinTime->diffForHumans() }}
+                </span>
             @else
                 &mdash;
             @endif

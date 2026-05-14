@@ -475,16 +475,16 @@ test('dashboard handles zero previous total without division error', function ()
     expect($html)->toContain('$500.00');
 });
 
-test('dashboard shows Dashboard heading', function () {
+test('dashboard shows Overview heading', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('Dashboard');
+        ->assertSee('Overview');
 });
 
-test('dashboard always shows Check In button', function () {
+test('dashboard always shows New Check-in button', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);

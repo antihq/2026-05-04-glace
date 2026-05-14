@@ -29,7 +29,7 @@ test('checkin shows form when no accounts', function () {
     $this->actingAs($user);
 
     Livewire::test('pages::checkins.create')
-        ->assertSee('Check In')
+        ->assertSee('New Check-in')
         ->assertSeeHtml('type="submit"');
 });
 

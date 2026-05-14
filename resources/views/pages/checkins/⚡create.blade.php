@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Check In')] class extends Component
+new #[Title('New Check-in')] class extends Component
 {
     public array $balances = [];
 
@@ -71,7 +71,7 @@ new #[Title('Check In')] class extends Component
 }; ?>
 
 <section class="w-full">
-    <flux:heading size="xl" level="1">Check In</flux:heading>
+    <flux:heading size="xl" level="1">New Check-in</flux:heading>
     <flux:text class="mt-1 max-w-prose">Record a snapshot of your current balances. Each check-in is timestamped and used to compute changes over time. Leave any account blank to skip it.</flux:text>
 
     <form wire:submit="submit" class="mt-6 space-y-8 max-w-lg">
@@ -96,6 +96,6 @@ new #[Title('Check In')] class extends Component
             @endif
         @endforeach
 
-        <flux:button variant="primary" type="submit">Check In</flux:button>
+        <flux:button variant="primary" type="submit">New Check-in</flux:button>
     </form>
 </section>

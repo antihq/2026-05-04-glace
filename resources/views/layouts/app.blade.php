@@ -13,13 +13,10 @@
 
             <flux:sidebar.nav>
                 <flux:sidebar.item :href="route('dashboard')" :current="request()->routeIs('dashboard')" :accent="false" wire:navigate>
-                    Dashboard
-                </flux:sidebar.item>
-                <flux:sidebar.item :href="route('checkins.create')" :current="request()->routeIs('checkins.create')" :accent="false" wire:navigate>
-                    Check In
+                    Overview
                 </flux:sidebar.item>
                 <flux:sidebar.item :href="route('checkins.index')" :current="request()->routeIs('checkins.*')" :accent="false" wire:navigate>
-                    History
+                    Check-ins
                 </flux:sidebar.item>
                 <flux:sidebar.item :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" :accent="false" wire:navigate>
                     Accounts

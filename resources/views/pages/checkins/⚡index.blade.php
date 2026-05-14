@@ -6,7 +6,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Check-in History')] class extends Component
+new #[Title('Check-ins')] class extends Component
 {
     #[Computed]
     public function checkins()
@@ -27,8 +27,8 @@ new #[Title('Check-in History')] class extends Component
 
 <section class="w-full">
     <div class="flex items-end justify-between gap-4">
-        <flux:heading size="xl" level="1">Check-in History</flux:heading>
-        <flux:button variant="primary" :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Check In</flux:button>
+        <flux:heading size="xl" level="1">Check-ins</flux:heading>
+        <flux:button variant="primary" :href="route('checkins.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>New Check-in</flux:button>
     </div>
 
     <flux:table class="mt-8">
