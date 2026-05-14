@@ -2,6 +2,7 @@
 
 use App\Models\Account;
 use App\Models\Balance;
+use Carbon\Carbon;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -61,6 +62,25 @@ new class extends Component
         return $this->balances->first()->amount_in_cents - $this->balances->last()->amount_in_cents;
     }
 
+    #[Computed]
+    public function monthlyBalances()
+    {
+        $balances = $this->balances;
+
+        if ($balances->isEmpty()) {
+            return collect();
+        }
+
+        return $balances
+            ->groupBy(fn ($b) => Carbon::parse($b->checked_in_at)->format('Y-m'))
+            ->map(fn ($monthBalances) => [
+                'amount' => $monthBalances->first()->amount_in_cents,
+                'month' => Carbon::parse($monthBalances->first()->checked_in_at),
+            ])
+            ->sortKeysDesc()
+            ->values();
+    }
+
     public function delete(): void
     {
         $account = Account::where('team_id', Auth::user()->currentTeam->id)
@@ -79,6 +99,11 @@ new class extends Component
         $dollars = abs($cents / 100);
 
         return ($cents < 0 ? '-' : '').'$'.number_format($dollars, 2);
+    }
+
+    private function formatPercent(float $percent): string
+    {
+        return ($percent > 0 ? '+' : '').number_format($percent, 2).'%';
     }
 
     public function render()
@@ -171,6 +196,57 @@ new class extends Component
             @endforeach
         </flux:table.rows>
     </flux:table>
+
+    @if ($this->monthlyBalances->count() > 1)
+        <flux:heading level="2" class="mt-12">Monthly Balance</flux:heading>
+        <flux:table class="mt-4">
+            <flux:table.columns>
+                <flux:table.column>Month</flux:table.column>
+                <flux:table.column align="end">Balance</flux:table.column>
+                <flux:table.column align="end">Change</flux:table.column>
+                <flux:table.column align="end">Change %</flux:table.column>
+            </flux:table.columns>
+            <flux:table.rows>
+                @foreach ($this->monthlyBalances as $i => $monthData)
+                    @php
+                        $prevMonthData = $this->monthlyBalances[$i + 1] ?? null;
+                        $monthDelta = $prevMonthData ? $monthData['amount'] - $prevMonthData['amount'] : null;
+                        $monthDeltaPercent = ($monthDelta !== null && $prevMonthData['amount'] != 0)
+                            ? round(($monthDelta / abs($prevMonthData['amount'])) * 100, 2)
+                            : null;
+                    @endphp
+                    <flux:table.row>
+                        <flux:table.cell>{{ $monthData['month']->format('F Y') }}</flux:table.cell>
+                        <flux:table.cell align="end">
+                            <span class="tabular-nums">{{ $this->formatCents($monthData['amount']) }}</span>
+                        </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <span class="tabular-nums">
+                                @if ($monthDelta !== null && $monthDelta !== 0)
+                                    <span class="{{ $monthDelta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ $monthDelta > 0 ? '+' : '' }}{{ $this->formatCents($monthDelta) }}
+                                    </span>
+                                @else
+                                    &mdash;
+                                @endif
+                            </span>
+                        </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <span class="tabular-nums">
+                                @if ($monthDeltaPercent !== null)
+                                    <span class="{{ $monthDeltaPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ $this->formatPercent($monthDeltaPercent) }}
+                                    </span>
+                                @else
+                                    &mdash;
+                                @endif
+                            </span>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    @endif
 
     <flux:separator class="mt-12" />
 

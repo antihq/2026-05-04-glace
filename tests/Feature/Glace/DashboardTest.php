@@ -564,3 +564,142 @@ test('dashboard links account rows to accounts show page', function () {
     $html = Livewire::test('pages::dashboard')->html();
     expect($html)->toContain(route('accounts.show', ['current_team' => $user->currentTeam->slug, 'account' => $account->id]));
 });
+
+test('dashboard monthly overview shows heading when balances exist', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create([
+        'account_id' => $account->id,
+        'checkin_id' => $checkin->id,
+        'amount' => '100.00',
+        'checked_in_at' => $checkin->checked_in_at,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard')
+        ->assertSee('Monthly Overview');
+});
+
+test('dashboard monthly overview is hidden when no balances exist', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->not->toContain('Monthly Overview');
+});
+
+test('dashboard monthly overview shows totals per month with change', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $month1 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subMonths(2)]);
+    $month2 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subMonth()]);
+    $month3 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $month1->id, 'amount' => '500.00', 'checked_in_at' => $month1->checked_in_at]);
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $month2->id, 'amount' => '750.00', 'checked_in_at' => $month2->checked_in_at]);
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $month3->id, 'amount' => '900.00', 'checked_in_at' => $month3->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain('$500.00');
+    expect($html)->toContain('$750.00');
+    expect($html)->toContain('$900.00');
+    expect($html)->toContain('+$250.00');
+    expect($html)->toContain('+$150.00');
+});
+
+test('dashboard monthly overview shows negative change between months', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $month1 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subMonth()]);
+    $month2 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $month1->id, 'amount' => '1000.00', 'checked_in_at' => $month1->checked_in_at]);
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $month2->id, 'amount' => '750.00', 'checked_in_at' => $month2->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain('-$250.00');
+    expect($html)->toContain('-25.00%');
+});
+
+test('dashboard monthly overview uses last balance per account per month', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'AcctLast']);
+
+    $early = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subMonth()->startOfMonth()->addDays(5)]);
+    $late = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subMonth()->endOfMonth()]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $early->id, 'amount' => '100.00', 'checked_in_at' => $early->checked_in_at]);
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $late->id, 'amount' => '200.00', 'checked_in_at' => $late->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+
+    $monthlyOverviewStart = strpos($html, 'Monthly Overview');
+    $monthlySection = substr($html, $monthlyOverviewStart);
+
+    expect($monthlySection)->toContain('$200.00');
+    expect($monthlySection)->not->toContain('$100.00');
+});
+
+test('dashboard monthly overview sums across multiple accounts', function () {
+    $user = User::factory()->create();
+    $checking = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Checking']);
+    $savings = Account::factory()->create(['team_id' => $user->currentTeam->id, 'name' => 'Savings']);
+
+    $month1 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subMonth()]);
+    $month2 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $checking->id, 'checkin_id' => $month1->id, 'amount' => '300.00', 'checked_in_at' => $month1->checked_in_at]);
+    Balance::factory()->create(['account_id' => $savings->id, 'checkin_id' => $month1->id, 'amount' => '700.00', 'checked_in_at' => $month1->checked_in_at]);
+    Balance::factory()->create(['account_id' => $checking->id, 'checkin_id' => $month2->id, 'amount' => '400.00', 'checked_in_at' => $month2->checked_in_at]);
+    Balance::factory()->create(['account_id' => $savings->id, 'checkin_id' => $month2->id, 'amount' => '800.00', 'checked_in_at' => $month2->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain('$1,000.00');
+    expect($html)->toContain('$1,200.00');
+    expect($html)->toContain('+$200.00');
+});
+
+test('dashboard monthly overview handles zero previous month total', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $month1 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subMonth()]);
+    $month2 = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $month1->id, 'amount' => '0.00', 'checked_in_at' => $month1->checked_in_at]);
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $month2->id, 'amount' => '500.00', 'checked_in_at' => $month2->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->toContain('$500.00');
+});
+
+test('dashboard monthly overview does not show other teams data', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $otherAccount = Account::factory()->create(['team_id' => $otherUser->currentTeam->id, 'name' => 'Secret']);
+    $otherCheckin = Checkin::factory()->create(['team_id' => $otherUser->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $otherAccount->id, 'checkin_id' => $otherCheckin->id, 'amount' => '9999.00', 'checked_in_at' => $otherCheckin->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::dashboard')->html();
+    expect($html)->not->toContain('Secret');
+    expect($html)->not->toContain('$9,999.00');
+});

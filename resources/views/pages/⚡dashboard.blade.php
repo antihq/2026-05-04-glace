@@ -118,6 +118,31 @@ new #[Title('Overview')] class extends Component
         return round((($this->total - $this->previousTotal) / abs($this->previousTotal)) * 100, 2);
     }
 
+    #[Computed]
+    public function monthlyBalances()
+    {
+        $accountIds = $this->accounts->pluck('id');
+
+        if ($accountIds->isEmpty()) {
+            return collect();
+        }
+
+        return Balance::whereIn('account_id', $accountIds)
+            ->orderByDesc('checked_in_at')
+            ->get()
+            ->groupBy(fn ($b) => Carbon::parse($b->checked_in_at)->format('Y-m'))
+            ->map(function ($monthBalances) {
+                $latestPerAccount = $monthBalances->unique('account_id');
+
+                return [
+                    'total' => $latestPerAccount->sum('amount_in_cents'),
+                    'month' => Carbon::parse($monthBalances->first()->checked_in_at),
+                ];
+            })
+            ->sortKeysDesc()
+            ->values();
+    }
+
     private function formatCents(int $cents): string
     {
         $dollars = abs($cents / 100);
@@ -266,4 +291,55 @@ new #[Title('Overview')] class extends Component
             @endforeach
         </flux:table.rows>
     </flux:table>
+
+    @if ($this->monthlyBalances->isNotEmpty())
+        <flux:heading level="2" class="mt-12">Monthly Overview</flux:heading>
+        <flux:table class="mt-4">
+            <flux:table.columns>
+                <flux:table.column>Month</flux:table.column>
+                <flux:table.column align="end">Total Balance</flux:table.column>
+                <flux:table.column align="end">Change</flux:table.column>
+                <flux:table.column align="end">Change %</flux:table.column>
+            </flux:table.columns>
+            <flux:table.rows>
+                @foreach ($this->monthlyBalances as $i => $monthData)
+                    @php
+                        $prevMonthData = $this->monthlyBalances[$i + 1] ?? null;
+                        $monthDelta = $prevMonthData ? $monthData['total'] - $prevMonthData['total'] : null;
+                        $monthDeltaPercent = ($monthDelta !== null && $prevMonthData['total'] != 0)
+                            ? round(($monthDelta / abs($prevMonthData['total'])) * 100, 2)
+                            : null;
+                    @endphp
+                    <flux:table.row>
+                        <flux:table.cell>{{ $monthData['month']->format('F Y') }}</flux:table.cell>
+                        <flux:table.cell align="end">
+                            <span class="tabular-nums">{{ $this->formatCents($monthData['total']) }}</span>
+                        </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <span class="tabular-nums">
+                                @if ($monthDelta !== null && $monthDelta !== 0)
+                                    <span class="{{ $monthDelta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ $monthDelta > 0 ? '+' : '' }}{{ $this->formatCents($monthDelta) }}
+                                    </span>
+                                @else
+                                    &mdash;
+                                @endif
+                            </span>
+                        </flux:table.cell>
+                        <flux:table.cell align="end">
+                            <span class="tabular-nums">
+                                @if ($monthDeltaPercent !== null)
+                                    <span class="{{ $monthDeltaPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ $this->formatPercent($monthDeltaPercent) }}
+                                    </span>
+                                @else
+                                    &mdash;
+                                @endif
+                            </span>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+    @endif
 </section>

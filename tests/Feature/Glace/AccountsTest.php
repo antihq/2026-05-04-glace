@@ -341,3 +341,91 @@ test('credit limit is cleared when type is not credit card', function () {
     $account = Account::where('team_id', $user->currentTeam->id)->where('name', 'Checking')->first();
     expect($account->credit_limit_in_cents)->toBeNull();
 });
+
+test('accounts show monthly balance section when multiple months of data exist', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '500.00', 'checked_in_at' => now()->subMonth()]);
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '750.00', 'checked_in_at' => now()]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::accounts.show', ['account' => $account->id])->html();
+    expect($html)->toContain('Monthly Balance');
+});
+
+test('accounts show hides monthly balance when only one month of data', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '500.00', 'checked_in_at' => now()]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::accounts.show', ['account' => $account->id])->html();
+    expect($html)->not->toContain('Monthly Balance');
+});
+
+test('accounts show monthly balance shows per-month amounts with change', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '400.00', 'checked_in_at' => now()->subMonths(2)]);
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '600.00', 'checked_in_at' => now()->subMonth()]);
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '800.00', 'checked_in_at' => now()]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::accounts.show', ['account' => $account->id])->html();
+    expect($html)->toContain('$400.00');
+    expect($html)->toContain('$600.00');
+    expect($html)->toContain('$800.00');
+    expect($html)->toContain('+$200.00');
+});
+
+test('accounts show monthly balance shows negative change between months', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '1000.00', 'checked_in_at' => now()->subMonth()]);
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '700.00', 'checked_in_at' => now()]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::accounts.show', ['account' => $account->id])->html();
+    expect($html)->toContain('-$300.00');
+    expect($html)->toContain('-30.00%');
+});
+
+test('accounts show monthly balance uses last balance in month with multiple checkins', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '50.00', 'checked_in_at' => now()->subMonth()->startOfMonth()->addDays(5)]);
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '200.00', 'checked_in_at' => now()->subMonth()->endOfMonth()]);
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '400.00', 'checked_in_at' => now()]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::accounts.show', ['account' => $account->id])->html();
+
+    $monthlyStart = strpos($html, 'Monthly Balance');
+    $monthlySection = substr($html, $monthlyStart);
+
+    expect($monthlySection)->toContain('$200.00');
+    expect($monthlySection)->not->toContain('$50.00');
+});
+
+test('accounts show monthly balance handles zero previous month balance', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '0.00', 'checked_in_at' => now()->subMonth()]);
+    Balance::factory()->create(['account_id' => $account->id, 'amount' => '500.00', 'checked_in_at' => now()]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::accounts.show', ['account' => $account->id])->html();
+    expect($html)->toContain('$500.00');
+});
