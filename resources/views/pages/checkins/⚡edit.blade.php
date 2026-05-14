@@ -106,42 +106,31 @@ new #[Title('Edit Check-in')] class extends Component
 }; ?>
 
 <section class="w-full">
-    <div>
-        <flux:heading size="xl" level="1">Edit Check-in</flux:heading>
+    <flux:heading size="xl" level="1">Edit Check-in</flux:heading>
+    <flux:text class="mt-1 max-w-prose">Recorded {{ $this->checkedInAt }}. Leave any account blank to remove it from this check-in.</flux:text>
 
-        <form wire:submit="update" class="mt-6 space-y-8">
-            <div class="text-sm text-zinc-500">
-                {{ $this->checkedInAt }}
-            </div>
+    <form wire:submit="update" class="mt-6 space-y-8 max-w-lg">
+        @foreach ($this->accounts as $account)
+            @if ($account->type === AccountType::CreditCard && $account->credit_limit_in_cents !== null)
+                <flux:field>
+                    <flux:label>{{ $account->name }} — Available credit</flux:label>
+                    <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
+                    <flux:description>Balance owed = credit limit ({{ $account->credit_limit }}) − available credit.</flux:description>
+                </flux:field>
+            @elseif ($account->type === AccountType::CreditCard)
+                <flux:field>
+                    <flux:label>{{ $account->name }}</flux:label>
+                    <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
+                    <flux:description>Enter balance owed. Stored as negative.</flux:description>
+                </flux:field>
+            @else
+                <flux:field>
+                    <flux:label>{{ $account->name }}</flux:label>
+                    <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
+                </flux:field>
+            @endif
+        @endforeach
 
-            <flux:text>Leave any account blank to remove it from this check-in.</flux:text>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                @foreach ($this->accounts as $account)
-                    <div>
-                        @if ($account->type === AccountType::CreditCard && $account->credit_limit_in_cents !== null)
-                            <flux:field>
-                                <flux:label>{{ $account->name }} — Available credit</flux:label>
-                                <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
-                                <flux:description>Balance owed = credit limit ({{ $account->credit_limit }}) − available credit.</flux:description>
-                            </flux:field>
-                        @elseif ($account->type === AccountType::CreditCard)
-                            <flux:field>
-                                <flux:label>{{ $account->name }}</flux:label>
-                                <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
-                                <flux:description>Enter balance owed. Stored as negative.</flux:description>
-                            </flux:field>
-                        @else
-                            <flux:field>
-                                <flux:label>{{ $account->name }}</flux:label>
-                                <flux:input wire:model="balances.{{ $account->id }}" type="number" step="0.01" />
-                            </flux:field>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-
-            <flux:button variant="primary" type="submit">Save Changes</flux:button>
-        </form>
-    </div>
+        <flux:button variant="primary" type="submit">Save Changes</flux:button>
+    </form>
 </section>
