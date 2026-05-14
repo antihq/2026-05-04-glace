@@ -84,8 +84,13 @@ new class extends Component
                     @endforeach
                 </flux:select>
                 <flux:description>
-                    <span class="block">Checking — standard bank account. Savings — interest-bearing account.</span>
-                    <span class="block">Credit Card — revolving credit, balances entered as available credit or amount owed and stored as negative. Cash — physical currency. Other — miscellaneous.</span>
+                    <ul class="list-disc space-y-0.5 pl-4 marker:text-zinc-500 dark:marker:text-zinc-400">
+                        <li><span class="font-medium text-zinc-950 dark:text-white">Checking</span> — standard bank account</li>
+                        <li><span class="font-medium text-zinc-950 dark:text-white">Savings</span> — interest-bearing account</li>
+                        <li><span class="font-medium text-zinc-950 dark:text-white">Credit Card</span> — revolving credit; balances stored as negative</li>
+                        <li><span class="font-medium text-zinc-950 dark:text-white">Cash</span> — physical currency</li>
+                        <li><span class="font-medium text-zinc-950 dark:text-white">Other</span> — miscellaneous</li>
+                    </ul>
                 </flux:description>
                 <flux:error name="type" />
             </flux:field>
