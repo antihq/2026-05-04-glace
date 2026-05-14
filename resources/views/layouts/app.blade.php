@@ -12,13 +12,13 @@
             </div>
 
             <flux:sidebar.nav>
-                <flux:sidebar.item :href="route('dashboard')" :current="request()->routeIs('dashboard')" :accent="false" wire:navigate>
+                <flux:sidebar.item icon="dashboard" :href="route('dashboard')" :current="request()->routeIs('dashboard')" :accent="false" wire:navigate>
                     Overview
                 </flux:sidebar.item>
-                <flux:sidebar.item :href="route('checkins.index')" :current="request()->routeIs('checkins.*')" :accent="false" wire:navigate>
+                <flux:sidebar.item icon="bookmark-check" :href="route('checkins.index')" :current="request()->routeIs('checkins.*')" :accent="false" wire:navigate>
                     Check-ins
                 </flux:sidebar.item>
-                <flux:sidebar.item :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" :accent="false" wire:navigate>
+                <flux:sidebar.item icon="wallet" :href="route('accounts.index')" :current="request()->routeIs('accounts.*')" :accent="false" wire:navigate>
                     Accounts
                 </flux:sidebar.item>
             </flux:navbar>
