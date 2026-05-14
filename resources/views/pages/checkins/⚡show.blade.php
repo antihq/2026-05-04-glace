@@ -92,7 +92,7 @@ new class extends Component
     <flux:table class="mt-4">
         <flux:table.columns>
             <flux:table.column>Account</flux:table.column>
-            <flux:table.column align="right">Amount</flux:table.column>
+            <flux:table.column align="end">Amount</flux:table.column>
         </flux:table.columns>
         <flux:table.rows>
             @foreach ($this->checkin->balances as $balance)
@@ -101,7 +101,7 @@ new class extends Component
                         <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate :first="true" />
                         {{ $balance->account->name }}
                     </flux:table.cell>
-                    <flux:table.cell class="relative text-right">
+                    <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate />
                         <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
                     </flux:table.cell>

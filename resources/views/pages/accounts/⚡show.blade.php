@@ -128,8 +128,8 @@ new class extends Component
     <flux:table class="mt-4">
         <flux:table.columns>
             <flux:table.column>Date</flux:table.column>
-            <flux:table.column align="right">Amount</flux:table.column>
-            <flux:table.column align="right">Change</flux:table.column>
+            <flux:table.column align="end">Amount</flux:table.column>
+            <flux:table.column align="end">Change</flux:table.column>
         </flux:table.columns>
         <flux:table.rows>
             @foreach ($this->balances as $i => $balance)
@@ -147,13 +147,13 @@ new class extends Component
                         @endif
                         {{ $balance->checked_in_at->format('M j, Y g:i A') }}
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         @if ($checkinUrl)
                             <x-table-row-link :href="$checkinUrl" wire:navigate />
                         @endif
                         <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         @if ($checkinUrl)
                             <x-table-row-link :href="$checkinUrl" wire:navigate />
                         @endif

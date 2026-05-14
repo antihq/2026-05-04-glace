@@ -34,8 +34,8 @@ new #[Title('Check-in History')] class extends Component
     <flux:table class="mt-8">
         <flux:table.columns>
             <flux:table.column>Date</flux:table.column>
-            <flux:table.column class="text-right">Accounts</flux:table.column>
-            <flux:table.column class="text-right">Total</flux:table.column>
+            <flux:table.column align="end">Accounts</flux:table.column>
+            <flux:table.column align="end">Total</flux:table.column>
         </flux:table.columns>
         <flux:table.rows>
             @foreach ($this->checkins as $checkin)
@@ -44,11 +44,11 @@ new #[Title('Check-in History')] class extends Component
                         <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate :first="true" />
                         {{ $checkin->checked_in_at->format('M j, Y g:i A') }} {{ $checkin->checked_in_at->diffForHumans() }}
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate />
                         <span class="tabular-nums">{{ $checkin->balances->count() }} {{ str()->plural('account', $checkin->balances->count()) }}</span>
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $checkin->id])" wire:navigate />
                         <span class="tabular-nums">{{ $this->formatCents($checkin->balances->sum('amount_in_cents')) }}</span>
                     </flux:table.cell>

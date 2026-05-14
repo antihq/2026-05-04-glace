@@ -174,9 +174,12 @@ new #[Title('Dashboard')] class extends Component
         <x-description.term>Last check-in</x-description.term>
         <x-description.details>
             @if ($this->latestCheckinTime)
-                <flux:link :accent="false" :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->latestCheckin->id])" wire:navigate>
-                    {{ $this->latestCheckinTime->format('M j, Y g:i A') }} ({{ $this->latestCheckinTime->diffForHumans() }})
-                </flux:link>
+                <div class="flex items-center gap-3">
+                    <flux:link :accent="false" :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->latestCheckin->id])" wire:navigate>
+                        {{ $this->latestCheckinTime->format('M j, Y g:i A') }}
+                    </flux:link>
+                    <flux:badge>{{ $this->latestCheckinTime->diffForHumans() }}</flux:badge>
+                </div>
             @else
                 &mdash;
             @endif
@@ -194,10 +197,10 @@ new #[Title('Dashboard')] class extends Component
     <flux:table class="mt-4">
         <flux:table.columns>
             <flux:table.column>Account</flux:table.column>
-            <flux:table.column align="right">Current</flux:table.column>
-            <flux:table.column align="right">Previous</flux:table.column>
-            <flux:table.column align="right">Change</flux:table.column>
-            <flux:table.column align="right">%</flux:table.column>
+            <flux:table.column align="end">Current</flux:table.column>
+            <flux:table.column align="end">Previous</flux:table.column>
+            <flux:table.column align="end">Change</flux:table.column>
+            <flux:table.column align="end">%</flux:table.column>
         </flux:table.columns>
         <flux:table.rows>
             @foreach ($this->accounts as $account)
@@ -215,7 +218,7 @@ new #[Title('Dashboard')] class extends Component
                         <x-table-row-link :href="$accountUrl" wire:navigate :first="true" />
                         {{ $account->name }}
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="$accountUrl" wire:navigate />
                         <span class="tabular-nums">
                             @if ($current)
@@ -225,7 +228,7 @@ new #[Title('Dashboard')] class extends Component
                             @endif
                         </span>
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="$accountUrl" wire:navigate />
                         <span class="tabular-nums">
                             @if ($previous)
@@ -235,7 +238,7 @@ new #[Title('Dashboard')] class extends Component
                             @endif
                         </span>
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="$accountUrl" wire:navigate />
                         <span class="tabular-nums">
                             @if ($accountDelta !== null && $accountDelta !== 0)
@@ -247,7 +250,7 @@ new #[Title('Dashboard')] class extends Component
                             @endif
                         </span>
                     </flux:table.cell>
-                    <flux:table.cell class="relative">
+                    <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="$accountUrl" wire:navigate />
                         <span class="tabular-nums">
                             @if ($accountDeltaPercent !== null)
