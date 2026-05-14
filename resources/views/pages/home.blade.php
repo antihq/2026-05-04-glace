@@ -1,14 +1,16 @@
-<x-layouts::guest title="Welcome">
+<x-layouts::guest title="Sign in">
     <div class="mx-auto max-w-md">
-        <flux:badge class="font-mono">{{ config('app.name', 'Laravel Teams Starter Kit') }}</flux:badge>
+        <flux:badge class="font-mono">{{ config('app.name', 'Laravel') }}</flux:badge>
 
         <flux:heading level="1" size="xl" class="mt-2">
-            Anti Starter Kit
+            Track account balances across timestamped check-ins.
         </flux:heading>
 
-        <flux:separator class="my-8" />
+        <flux:text class="mt-2 max-w-prose">
+            Record snapshots of your account balances over time. Each check-in is timestamped and used to compute changes between periods.
+        </flux:text>
 
-        <flux:heading level="2" class="mt-8">Sign in to your account</flux:heading>
+        <flux:separator class="my-8" />
 
         <form method="POST" action="{{ route('login.store') }}" class="mt-6 space-y-8">
             @csrf

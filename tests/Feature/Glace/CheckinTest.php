@@ -23,14 +23,14 @@ test('checkin page redirects guests to login', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('checkin shows form when no accounts', function () {
+test('checkin shows empty state when no accounts', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     Livewire::test('pages::checkins.create')
         ->assertSee('New Check-in')
-        ->assertSeeHtml('type="submit"');
+        ->assertSee('No accounts');
 });
 
 test('checkin shows all account names simultaneously', function () {
@@ -234,5 +234,5 @@ test('checkin shows balance owed hint for credit card without limit', function (
     $this->actingAs($user);
 
     $html = Livewire::test('pages::checkins.create')->html();
-    expect($html)->toContain('Enter balance owed');
+    expect($html)->toContain('Balance owed');
 });

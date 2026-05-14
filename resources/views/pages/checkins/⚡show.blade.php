@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Balance;
 use App\Models\Checkin;
+use App\Support\CurrencyFormatter;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -37,35 +39,45 @@ new class extends Component
         return $this->checkin->balances->sum('amount_in_cents');
     }
 
+    #[Computed]
+    public function previousBalances()
+    {
+        $prevCheckin = Checkin::where('team_id', Auth::user()->currentTeam->id)
+            ->where('checked_in_at', '<', $this->checkin->checked_in_at)
+            ->orderByDesc('checked_in_at')
+            ->first();
+
+        if (! $prevCheckin) {
+            return collect();
+        }
+
+        return Balance::where('checkin_id', $prevCheckin->id)
+            ->get()
+            ->keyBy('account_id');
+    }
+
     public function delete(): void
     {
         $checkin = Checkin::where('id', $this->checkinId)
             ->where('team_id', Auth::user()->currentTeam->id)
             ->firstOrFail();
 
-        $checkin->delete();
+        Flux::toast(variant: 'success', text: $checkin->balances->count().' balance records deleted.');
 
-        Flux::toast(variant: 'success', text: 'Check-in deleted.');
+        $checkin->delete();
 
         $this->redirectRoute('checkins.index', ['current_team' => Auth::user()->currentTeam->slug], navigate: true);
     }
 
-    private function formatCents(int $cents): string
-    {
-        $dollars = abs($cents / 100);
-
-        return ($cents < 0 ? '-' : '').'$'.number_format($dollars, 2);
-    }
-
     public function render()
     {
-        return $this->view()->title('Check-in '.$this->checkin->checked_in_at->format('M j, Y'));
+        return $this->view()->title('Check-in — '.$this->checkin->checked_in_at->format('M j, Y'));
     }
 }; ?>
 
 <section class="w-full">
     <div class="flex items-end justify-between gap-4">
-        <flux:heading size="xl" level="1">Check-in</flux:heading>
+        <flux:heading size="xl" level="1">Check-in — {{ $this->checkin->checked_in_at->format('M j, Y') }}</flux:heading>
         <flux:button variant="primary" :href="route('checkins.edit', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->checkinId])" wire:navigate>
             Edit
         </flux:button>
@@ -85,25 +97,47 @@ new class extends Component
         </x-description.details>
 
         <x-description.term>Total</x-description.term>
-        <x-description.details class="tabular-nums">{{ $this->formatCents($this->total) }}</x-description.details>
+        <x-description.details class="tabular-nums">{{ CurrencyFormatter::cents($this->total) }}</x-description.details>
     </x-description.list>
 
     <flux:heading level="2" class="mt-12">Balances</flux:heading>
     <flux:table class="mt-4">
         <flux:table.columns>
             <flux:table.column>Account</flux:table.column>
+            <flux:table.column>Type</flux:table.column>
             <flux:table.column align="end">Amount</flux:table.column>
+            <flux:table.column align="end">Change</flux:table.column>
         </flux:table.columns>
         <flux:table.rows>
             @foreach ($this->checkin->balances as $balance)
+                @php
+                    $prev = $this->previousBalances->get($balance->account_id);
+                    $change = $prev ? $balance->amount_in_cents - $prev->amount_in_cents : null;
+                @endphp
                 <flux:table.row>
                     <flux:table.cell class="relative">
                         <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate :first="true" />
                         {{ $balance->account->name }}
                     </flux:table.cell>
+                    <flux:table.cell class="relative">
+                        <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate />
+                        <flux:badge color="zinc" size="sm" inset="top bottom">{{ $balance->account->type->label() }}</flux:badge>
+                    </flux:table.cell>
                     <flux:table.cell class="relative" align="end">
                         <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate />
-                        <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
+                        <span class="tabular-nums">{{ CurrencyFormatter::cents($balance->amount_in_cents) }}</span>
+                    </flux:table.cell>
+                    <flux:table.cell class="relative" align="end">
+                        <x-table-row-link :href="route('accounts.show', ['current_team' => Auth::user()->currentTeam->slug, 'account' => $balance->account_id])" wire:navigate />
+                        <span class="tabular-nums">
+                            @if ($change !== null && $change !== 0)
+                                <span class="{{ $change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                    {{ CurrencyFormatter::deltaCents($change) }}
+                                </span>
+                            @else
+                                &mdash;
+                            @endif
+                        </span>
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach

@@ -129,3 +129,55 @@ test('checkins.show links balances count to accounts index', function () {
     $html = Livewire::test('pages::checkins.show', ['checkin' => $checkin->id])->html();
     expect($html)->toContain(route('accounts.index', ['current_team' => $user->currentTeam->slug]));
 });
+
+test('checkins.show heading includes date', function () {
+    $user = User::factory()->create();
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.show', ['checkin' => $checkin->id])
+        ->assertSee($checkin->checked_in_at->format('M j, Y'));
+});
+
+test('checkins.show shows account type column', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id, 'type' => 'savings']);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $checkin->id, 'amount' => '500.00', 'checked_in_at' => $checkin->checked_in_at]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.show', ['checkin' => $checkin->id])
+        ->assertSee('Savings');
+});
+
+test('checkins.show shows per-account change from previous checkin', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    $prev = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()->subDay()]);
+    $latest = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $prev->id, 'amount' => '300.00', 'checked_in_at' => $prev->checked_in_at]);
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $latest->id, 'amount' => '500.00', 'checked_in_at' => $latest->checked_in_at]);
+
+    $this->actingAs($user);
+
+    $html = Livewire::test('pages::checkins.show', ['checkin' => $latest->id])->html();
+    expect($html)->toContain('+$200.00');
+});
+
+test('checkins.show shows dash for change when no previous checkin', function () {
+    $user = User::factory()->create();
+    $account = Account::factory()->create(['team_id' => $user->currentTeam->id]);
+    $checkin = Checkin::factory()->create(['team_id' => $user->currentTeam->id, 'checked_in_at' => now()]);
+
+    Balance::factory()->create(['account_id' => $account->id, 'checkin_id' => $checkin->id, 'amount' => '500.00', 'checked_in_at' => $checkin->checked_in_at]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::checkins.show', ['checkin' => $checkin->id])
+        ->assertSeeHtml('&mdash;');
+});

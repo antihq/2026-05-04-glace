@@ -2,6 +2,7 @@
 
 use App\Models\Account;
 use App\Models\Balance;
+use App\Support\CurrencyFormatter;
 use Carbon\Carbon;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -63,6 +64,19 @@ new class extends Component
     }
 
     #[Computed]
+    public function netChangeDateRange(): ?string
+    {
+        if ($this->balances->count() < 2) {
+            return null;
+        }
+
+        $first = $this->balances->last()->checked_in_at->format('M j, Y');
+        $latest = $this->balances->first()->checked_in_at->format('M j, Y');
+
+        return $first.' — '.$latest;
+    }
+
+    #[Computed]
     public function monthlyBalances()
     {
         $balances = $this->balances;
@@ -87,23 +101,11 @@ new class extends Component
             ->where('id', $this->accountId)
             ->firstOrFail();
 
+        Flux::toast(variant: 'success', text: 'Account deleted. '.$this->balanceCount.' balance records removed.');
+
         $account->delete();
 
-        Flux::toast(variant: 'success', text: 'Account deleted.');
-
         $this->redirectRoute('accounts.index', ['current_team' => Auth::user()->currentTeam->slug], navigate: true);
-    }
-
-    private function formatCents(int $cents): string
-    {
-        $dollars = abs($cents / 100);
-
-        return ($cents < 0 ? '-' : '').'$'.number_format($dollars, 2);
-    }
-
-    private function formatPercent(float $percent): string
-    {
-        return ($percent > 0 ? '+' : '').number_format($percent, 2).'%';
     }
 
     public function render()
@@ -121,6 +123,16 @@ new class extends Component
     </div>
 
     <x-description.list class="mt-2.5">
+        <x-description.term>Type</x-description.term>
+        <x-description.details>
+            <flux:badge color="zinc" size="sm" inset="top bottom">{{ $this->account->type->label() }}</flux:badge>
+        </x-description.details>
+
+        @if ($this->account->type === \App\Enums\AccountType::CreditCard && $this->account->credit_limit !== null)
+            <x-description.term>Credit limit</x-description.term>
+            <x-description.details class="tabular-nums">{{ CurrencyFormatter::cents($this->account->credit_limit_in_cents) }}</x-description.details>
+        @endif
+
         <x-description.term>Balances</x-description.term>
         <x-description.details>
             {{ $this->balanceCount }} {{ str()->plural('balance record', $this->balanceCount) }}
@@ -129,7 +141,7 @@ new class extends Component
         @if ($this->latestBalance)
             <x-description.term>Latest balance</x-description.term>
             <x-description.details class="tabular-nums">
-                {{ $this->formatCents($this->latestBalance->amount_in_cents) }}
+                {{ CurrencyFormatter::cents($this->latestBalance->amount_in_cents) }}
                 @if ($this->latestBalance->checkin)
                     <flux:link :accent="false" :href="route('checkins.show', ['current_team' => Auth::user()->currentTeam->slug, 'checkin' => $this->latestBalance->checkin_id])" wire:navigate>
                         {{ $this->latestBalance->checked_in_at->format('M j, Y') }}
@@ -143,8 +155,8 @@ new class extends Component
         @if ($this->netChange !== null)
             <x-description.term>Net change</x-description.term>
             <x-description.details class="tabular-nums {{ $this->netChange > 0 ? 'text-green-600 dark:text-green-400' : ($this->netChange < 0 ? 'text-red-600 dark:text-red-400' : '') }}">
-                {{ $this->netChange > 0 ? '+' : '' }}{{ $this->formatCents($this->netChange) }}
-                <span class="text-zinc-400 text-xs ml-1">since first check-in</span>
+                {{ CurrencyFormatter::deltaCents($this->netChange) }}
+                <span class="text-zinc-400 text-xs ml-1">since first check-in ({{ $this->netChangeDateRange }})</span>
             </x-description.details>
         @endif
     </x-description.list>
@@ -176,7 +188,7 @@ new class extends Component
                         @if ($checkinUrl)
                             <x-table-row-link :href="$checkinUrl" wire:navigate />
                         @endif
-                        <span class="tabular-nums">{{ $this->formatCents($balance->amount_in_cents) }}</span>
+                        <span class="tabular-nums">{{ CurrencyFormatter::cents($balance->amount_in_cents) }}</span>
                     </flux:table.cell>
                     <flux:table.cell class="relative" align="end">
                         @if ($checkinUrl)
@@ -185,7 +197,7 @@ new class extends Component
                         <span class="tabular-nums">
                             @if ($change !== null && $change !== 0)
                                 <span class="{{ $change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                    {{ $change > 0 ? '+' : '' }}{{ $this->formatCents($change) }}
+                                    {{ CurrencyFormatter::deltaCents($change) }}
                                 </span>
                             @else
                                 &mdash;
@@ -218,13 +230,13 @@ new class extends Component
                     <flux:table.row>
                         <flux:table.cell>{{ $monthData['month']->format('F Y') }}</flux:table.cell>
                         <flux:table.cell align="end">
-                            <span class="tabular-nums">{{ $this->formatCents($monthData['amount']) }}</span>
+                            <span class="tabular-nums">{{ CurrencyFormatter::cents($monthData['amount']) }}</span>
                         </flux:table.cell>
                         <flux:table.cell align="end">
                             <span class="tabular-nums">
                                 @if ($monthDelta !== null && $monthDelta !== 0)
                                     <span class="{{ $monthDelta > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                        {{ $monthDelta > 0 ? '+' : '' }}{{ $this->formatCents($monthDelta) }}
+                                        {{ CurrencyFormatter::deltaCents($monthDelta) }}
                                     </span>
                                 @else
                                     &mdash;
@@ -235,7 +247,7 @@ new class extends Component
                             <span class="tabular-nums">
                                 @if ($monthDeltaPercent !== null)
                                     <span class="{{ $monthDeltaPercent > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                        {{ $this->formatPercent($monthDeltaPercent) }}
+                                        {{ CurrencyFormatter::percent($monthDeltaPercent) }}
                                     </span>
                                 @else
                                     &mdash;
@@ -251,7 +263,7 @@ new class extends Component
     <flux:separator class="mt-12" />
 
     <div class="mt-4">
-        <flux:button variant="danger" wire:click="delete" wire:confirm="Delete this account? Its balance history will also be removed.">
+        <flux:button variant="danger" wire:click="delete" wire:confirm="Delete this account? {{ $this->balanceCount }} balance records will be permanently removed.">
             Delete account
         </flux:button>
     </div>

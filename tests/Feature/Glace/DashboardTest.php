@@ -23,16 +23,14 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertOk();
 });
 
-test('dashboard shows data structure when no accounts', function () {
+test('dashboard shows empty state when no accounts', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('Total')
-        ->assertSee('$0.00')
-        ->assertSee('0 accounts tracked')
-        ->assertSee('Account Balances');
+        ->assertSee('No accounts')
+        ->assertSee('No check-ins recorded yet');
 });
 
 test('dashboard shows data structure when accounts exist but no check-ins', function () {
@@ -475,13 +473,13 @@ test('dashboard handles zero previous total without division error', function ()
     expect($html)->toContain('$500.00');
 });
 
-test('dashboard shows Overview heading', function () {
+test('dashboard shows Dashboard heading', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard')
-        ->assertSee('Overview');
+        ->assertSee('Dashboard');
 });
 
 test('dashboard always shows New Check-in button', function () {

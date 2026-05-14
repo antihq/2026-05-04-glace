@@ -83,7 +83,10 @@ new class extends Component
                         <flux:select.option value="{{ $case->value }}">{{ $case->label() }}</flux:select.option>
                     @endforeach
                 </flux:select>
-                <flux:description>Credit Card changes how check-in balances are entered. All other types are informational only.</flux:description>
+                <flux:description>
+                    <span class="block">Checking — standard bank account. Savings — interest-bearing account.</span>
+                    <span class="block">Credit Card — revolving credit, balances entered as available credit or amount owed and stored as negative. Cash — physical currency. Other — miscellaneous.</span>
+                </flux:description>
                 <flux:error name="type" />
             </flux:field>
 
@@ -94,7 +97,7 @@ new class extends Component
                 <flux:error name="credit_limit" />
             </flux:field>
 
-            <flux:button variant="primary" type="submit">Save</flux:button>
+            <flux:button variant="primary" type="submit">Update account</flux:button>
         </form>
     </div>
 </section>
