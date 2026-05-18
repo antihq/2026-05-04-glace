@@ -10,7 +10,7 @@
     'tooltipPosition' => 'right',
     'tooltipKbd' => null,
     'tooltip' => null,
-    'iconVariant' => 'outline',
+    'iconVariant' => 'solid',
     'iconTrailing' => null,
     'badgeColor' => null,
     'iconDot' => null,

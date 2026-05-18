@@ -68,7 +68,7 @@ new class extends Component
     <div>
         <flux:heading size="xl" level="1">Edit Account</flux:heading>
 
-        <form wire:submit="update" class="mt-6 space-y-8 max-w-lg">
+        <form wire:submit="update" class="mt-6 space-y-8 max-w-xl">
             <flux:field>
                 <flux:label>Name</flux:label>
                 <flux:input wire:model="name" type="text" required autofocus autocomplete="off" />
@@ -97,7 +97,7 @@ new class extends Component
 
             <flux:field>
                 <flux:label>Credit Limit</flux:label>
-                <flux:input wire:model="credit_limit" type="number" step="0.01" class="max-w-lg" :disabled="$type !== 'credit_card'" />
+                <flux:input wire:model="credit_limit" type="number" step="0.01" :disabled="$type !== 'credit_card'" />
                 <flux:description>When set, check-ins prompt for available credit and compute balance owed as credit limit minus available credit. When unset, check-ins prompt for balance owed directly.</flux:description>
                 <flux:error name="credit_limit" />
             </flux:field>

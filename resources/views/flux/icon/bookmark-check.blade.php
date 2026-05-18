@@ -3,10 +3,6 @@
 ])
 
 @php
-    if ($variant === 'solid') {
-        throw new \Exception('The "solid" variant is not supported in Lucide.');
-    }
-
     $classes = Flux::classes('shrink-0')->add(
         match ($variant) {
             'outline' => '[:where(&)]:size-6',
@@ -18,6 +14,7 @@
 
     $strokeWidth = match ($variant) {
         'outline' => 2,
+        'solid' => 1.5,
         'mini' => 2.25,
         'micro' => 2.5,
     };

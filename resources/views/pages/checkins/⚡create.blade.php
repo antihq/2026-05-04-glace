@@ -123,7 +123,7 @@ new #[Title('New Check-in')] class extends Component
     @if ($this->accounts->isEmpty())
         <flux:text class="mt-4">No accounts. <flux:link :href="route('accounts.create', ['current_team' => Auth::user()->currentTeam->slug])" wire:navigate>Create one</flux:link> to begin.</flux:text>
     @else
-        <form wire:submit="submit" class="mt-8 space-y-8 max-w-lg">
+        <form wire:submit="submit" class="mt-8 space-y-8 max-w-xl">
             @foreach ($this->accounts as $account)
                 @if ($account->type === AccountType::CreditCard && $account->credit_limit_in_cents !== null)
                     <flux:field>

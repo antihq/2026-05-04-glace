@@ -138,7 +138,7 @@ new #[Title('Edit Check-in')] class extends Component
 
     <flux:text class="mt-4 max-w-prose">Leave any account blank to remove it from this check-in.</flux:text>
 
-    <form wire:submit="update" class="mt-6 space-y-8 max-w-lg">
+    <form wire:submit="update" class="mt-6 space-y-8 max-w-xl">
         @foreach ($this->accounts as $account)
             @php
                 $original = $this->originalBalances[$account->id] ?? null;
